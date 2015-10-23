@@ -1,11 +1,11 @@
 150506 17:29:45  InnoDB: Database was not shut down normally!
 InnoDB: Starting crash recovery.
 InnoDB: Reading tablespace information from the .ibd files...
-InnoDB: Error: trying to add tablespace 519 of name './demoapp_pkpu/profiles.ibd'
+InnoDB: Error: trying to add tablespace 519 of name './demxxxxxxx/profiles.ibd'
 InnoDB: to the tablespace memory cache, but tablespace
 InnoDB: 519 of name './munjul_drup142/dr_field_data_field_noktp.ibd' already exists in the tablespace
 InnoDB: memory cache!
-150506 17:29:46 mysqld_safe mysqld from pid file /var/lib/mysql/svr.1bigtree.com.pid ended
+150506 17:29:46 mysqld_safe mysqld from pid file /var/lib/mysql/svr.xxxxxxxx.com.pid ended
 150506 17:29:51 mysqld_safe Starting mysqld daemon with databases from /var/lib/mysql
 150506 17:29:51 [Note] Plugin 'FEDERATED' is disabled.
 150506 17:29:51 InnoDB: The InnoDB memory heap is disabled
@@ -33,5 +33,3 @@ hapus/rename/pindahkan 3 file ini
 jalankan mysql kembali 
 bila masih error coba hapus/rename/pindahkan file 
 hosname.xxxx.err 
-
-svr.1bigtree.com.err 
