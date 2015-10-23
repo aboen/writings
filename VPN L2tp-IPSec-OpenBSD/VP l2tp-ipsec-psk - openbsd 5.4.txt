@@ -1,0 +1,182 @@
+Install VPN server l2tp/ipsec PSK di OpenBSD.5.4 dengan npppd
+Pastikan source tree sudah tersedia di /usr/src kalau belum maka download source tree caranya :
+	$ cd /tmp
+	$ ftp ftp://ftp.openbsd.org/pub/OpenBSD/5.4/src.tar.gz
+	$ cd /usr/src
+	$ sudo tar xzf /tmp/src.tar.gz
+
+Karena npppd belum tersedia di port maupun packages maka harus di install manual dari source tree yang ada.
+caranya :
+masuk sebagai root atau melalui sudo
+
+	# cd /usr/src/usr.sbin/npppd 
+	# make depend 
+	# make && make install
+
+Tunggu deh sampai selesai kalau gak ada error silakan di lanjut tapi kalau ada error silakan di copy/paste esrornya di google :D .
+
+Konfigurasinya :
+1.
+Buka file /etc/rc.conf dengan file editor ( vi , vim, nano, pico atau yang lainnya ) cari baris
+  isakmpd_flags=NO 
+ganti menjadi 
+  isakmpd_flags="-K"
+
+saya biasa pakai vi karena ada di semua OS *nix
+	# vi /etc/rc.conf
+
+2.
+Edit file  /etc/ipsec.conf  tambahkan saja baris berikut di akhir file.
+
+	ike passive esp transport \
+			proto udp from 1.2.3.4 to any port 1701 \
+			main auth "hmac-sha1" enc "3des" group modp1024 \
+			quick auth "hmac-sha1" enc "aes" \
+			psk "password"
+
+Yang harus di perhatikan :
+proto udp from 1.2.3.4 to any port 1701 \ 
+Ganti 1.2.3.4 dengan External IP ( ip yang terhubung ke Intrenet) dari server.
+
+psk "password" 
+Ini adalah Password dari PSK silakan "password" di ubah/ganti sesuai keinginan, ini digunakan pada IPSec pre-shared key (pada vpn di android 4.x) dan l2tp preshared key pada setting Security - Advanced Settings pada VPN di windows 7.
+
+3.
+Edit file /etc/npppd/npppd.conf di sini saya menggunakan plain password file jadi pastikan baris berikut tidak di komen (#)
+
+	authentication LOCAL type local {
+			users-file "/etc/npppd/npppd-users"
+	}
+
+Ubah juga pada:
+	ipcp IPCP {
+			pool-address 10.8.0.2-10.8.0.254
+			dns-servers 8.8.8.8
+	}
+
+Sesuaikan pool-address dengan ip yang diinginkan dan dns-servers dengan ip dns yang diinginkan.
+Kemudian edit bagian :
+ 
+	# use pppx(4) interface.  use an interface per a ppp session.
+	#interface pppx0 address 10.8.0.1 ipcp IPCP
+	#bind tunnel from L2TP_ipv4 authenticated by LOCAL to pppx0
+	#bind tunnel from L2TP_ipv6 authenticated by LOCAL to pppx0
+
+	# use tun(4) interface.  multiple ppp sessions concentrate one interface.
+	interface tun0  address 10.8.0.1 ipcp IPCP
+	bind tunnel from L2TP_ipv4 authenticated by LOCAL to tun0
+	bind tunnel from L2TP_ipv6 authenticated by LOCAL to tun0
+
+Pakai tun0 interface agar bisa terhubung dengan vpn server dengan banyak client, sesuaikan juga  Ip tun0 dengan pool-address.  
+
+4.
+edit file /etc/npppd/npppd-users tambahkan user yang boleh melakukan vpn contoh:
+
+	user1:\
+			:password=p4ssw0rd:\
+			:framed-ip-address=10.8.0.101:
+	user2:\
+			:password=p4ssw0rd:\
+			:framed-ip-address=10.8.0.102:
+		
+Ganti p4ssw0rd dengan password dari masing-masing user tersebut.
+framed-ip-address=10.8.0.101 , isikan ip dari masing2 user tersebut.
+
+5.
+Edit file /etc/pf.conf tambahkan baris berikut untuk membolehkan trafik keluar dan masuk:
+	pass on em0 from  10.8.0.0/24 to any
+	pass out on em0 from 10.8.0.0/24  to any nat-to (em0)
+
+6.
+Jalankan/restart semua software yang di perlukan 
+flush pf dengan perubahan yang baru di lakukan 
+	# pfctl -f /etc/pf.conf 
+
+Jalankan isakmpd 
+	# /etc/rc.d/isakmpd start
+	
+Jalankan IPSec 	dengan rule file /etc/ipsec.conf
+	# ipsecctl -f /etc/ipsec.conf
+	
+Jalankan NPPPD, sebagai ujicoba pakai opsion -d untuk debugging dan melihat semua bila ada masalah.
+	# /usr/sbin/npppd -d
+
+Bila hasil test sudah berjalan dengan baik tekan ctrl c , jalankan npppd tanpa option -d 
+
+
+7. 
+Setting pada Client
+WINDOWS 7 :
+Control Panel\Network and Internet\Network and Sharing Center 
+pada 
+	Network dan Sharing Center 
+Pilih 
+	Set up a new connection or network
+Pilih	
+	Connect to a workplace
+Pilih
+	No, create a new connection
+Pilih
+	Use my Internet connection (VPN)
+Isi
+	Internet address : dengan IP atau Nama Domain VPN Server
+	Destination name : Nama Konensi VPN (boleh dinamakan apa saja)
+Pilih Next
+Isi
+	User name dan Password yang sama pada file /etc/npppd/npppd-users
+Pilih Connect kemudian close saja.
+
+Kembali Ke Control Panel\Network and Internet\Network and Sharing Center
+Pilih 
+	Change adapter settings
+Klik kanan pada koneksi yang tadi dibuat 
+Pilih
+	Properties
+Pilih Tab
+	Security
+	Type of VPN
+Pilih 
+	Layer 2 Tunneling Protocol with IPSec (L2TP/IPSec)
+Klik 
+	Advanced settings
+Pilih 
+	Use preshared key for authentication 
+Isi pada
+	Key : ( psk "password" pada file /etc/ipsec.conf )
+Klik Ok
+	Data encryption : 
+Pilih	
+	No encryption allowed (server will disconect if it requires encryption)
+Klik OK
+Klik Kanan 
+Pilih
+	Connect
+
+ANDROID 4.X
+Pada menu Wireless & Network 
+Pilih 
+	VPN
+Buat koneksi vpn baru (add vpn profile)
+Isi
+	Name : (nama Vpn yang akan di buat)
+	Type : Pilih L2TP/IPSec PSK
+	Server Address : Ip server / domain server
+	L2TP secret dan IPSec identifier : Kosongkan saja
+	IPSec pre-shared key : password (isi ( "password" pada psk file /etc/ipsec.conf tanpa tanda " ))
+Kemudian Save
+Klik nama VPN yang sudah di buat 
+Isikan 
+	Username : user1
+	password : p4ssw0rd
+sesuai isi file /etc/npppd/npppd-users
+Pilih 
+	Connect
+	
+8.
+Bila fresh Install OpenBSD 	pastikan net.inet.ip.forwading di set 1:
+melalui sysctl
+	# sysctl net.inet.ip.forwarding=1
+atau untuk permanen edit file /etc/sysctl.conf ubah :
+	net.inet.ip.forwarding=1
+
+Sumber : http://undeadly.org/cgi?action=article&sid=20120427125048

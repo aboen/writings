@@ -1,0 +1,161 @@
+Pernah pake google maps ?
+Kalau belum pernah mungkin anda termasuk manusia purba :D,
+
+Google map menyediakan Application Programming Interface (API) yang mengunakan javascript.
+Sumbernya bisa di lihat di sini :
+https://developers.google.com/maps/documentation/javascript/tutorial
+
+Bisa buat apaan sih API map nya si google ini ?
+Banyak  bisa di liat disini :
+https://developers.google.com/maps/web/
+
+Salah satunya yang kita mau pake ini Google Maps JavaScript API v3.
+
+Dengan API javascript ini kita bisa buat peta sendiri dengan kordinat/titik yang kita bisa seting sendiri, sesuai keinginan kita.
+
+Penggunaan nya misal untuk data customer kita, dengan melihat titik-titik lokasi customer pada peta akan lebih mudah melihat sebaran customer didaerah mana saja, itu salah satu contohnya.
+
+Dari contohnya sudah cukup jelas, disini saya tambahin sedikit penggunaannya dengan data kordinat yang di ambil dari database (misalnya) dan  sudah berbentuk variabel php. 
+contoh variabelnya masih saya kasih komentar, dan data  kordinatnya masih dari variabel javascript.
+
+simpan scriptnya dalam format html atau php misal maps.html kemudian buka dari browser harusnya script ini sudah bisa berfungsi tanpa harus mengunakan webserver.
+
+Bila anda belum mendapatkan API nya atau bila terjadi error untuk mengakases map nya silakan daftar dulu disini:
+https://code.google.com/apis/console 
+tambahkan key api nya menjadi seperti ini (ISI_KEY_API di ganti dengan key yang diberikan setelah mendaftar)
+<script src="https://maps.googleapis.com/maps/api/js?key=ISI_KEY_API_ANDA&v=3.exp"></script>
+
+pada 
+<script src="https://maps.googleapis.com/maps/api/js?v=3.exp"></script>
+
+catatan :
+saya gak begitu menguasai javascript cuma sekedar tau dikit, yang mau praktek silakan dicoba dan yang mau tanya silakan dikomentar saja.
+
+mulai copy  scriptnya dari sini sampai bawah:
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <title>Map</title>
+    <style>
+      html, body, #map-canvas {
+        height: 100%;
+        margin: 0px;
+        padding: 0px;
+
+      }
+    </style>
+    <script src="https://maps.googleapis.com/maps/api/js?v=3.exp"></script>
+
+    <script>
+// The following example creates complex markers to indicate beaches near
+// Sydney, NSW, Australia. Note that the anchor is set to
+// (0,32) to correspond to the base of the flagpole.
+
+function initialize() {
+  var mapOptions = {
+    zoom: 12,
+    center: new google.maps.LatLng(-6.240, 106.844)
+  }
+  var map = new google.maps.Map(document.getElementById('map-canvas'),
+                                mapOptions);
+
+  setMarkers(map, beaches);
+}
+
+/**
+ * Data for the markers consisting of a name, a LatLng and a zIndex for
+ * the order in which these markers should display on top of each
+ * other.
+ */
+ /**
+ * bila ambil data dari varibel php
+ * $data = "[['Kebon Jeruk', -6.177273, 106.761725],
+ *          ['Sunter Mediterania I', -6.129144, 106.872446],
+ *          ['Kelapa Gading', -6.164473, 106.889269],
+ *          ['Matraman, Kota Jakarta Timur', -6.211874, 106.867812],
+ *          ['Depok', -6.359895, 106.823180]
+ *         ]";
+ *
+ * var beaches = <?php echo $data ?>;
+*/
+
+var beaches = [
+  ['Kebon Jeruk', -6.177273, 106.761725],
+  ['Sunter Mediterania I', -6.129144, 106.872446],
+  ['Kelapa Gading', -6.164473, 106.889269],
+  ['Matraman, Kota Jakarta Timur', -6.211874, 106.867812],
+  ['Depok', -6.359895, 106.823180]
+];
+
+function setMarkers(map, locations) {
+  // Add markers to the map
+
+  // Marker sizes are expressed as a Size of X,Y
+  // where the origin of the image (0,0) is located
+  // in the top left of the image.
+
+  // Origins, anchor positions and coordinates of the marker
+  // increase in the X direction to the right and in
+  // the Y direction down.
+  var image = {
+    //url: 'beachflag.png',
+    url: 'http://www.aim-awards.co.uk/media/png/beachflag.png',
+    // This marker is 20 pixels wide by 32 pixels tall.
+    size: new google.maps.Size(20, 32),
+    // The origin for this image is 0,0.
+    origin: new google.maps.Point(0,0),
+    // The anchor for this image is the base of the flagpole at 0,32.
+    anchor: new google.maps.Point(0, 32)
+  };
+  // Shapes define the clickable region of the icon.
+  // The type defines an HTML &lt;area&gt; element 'poly' which
+  // traces out a polygon as a series of X,Y points. The final
+  // coordinate closes the poly by connecting to the first
+  // coordinate.
+  var shape = {
+      coords: [1, 1, 1, 20, 18, 20, 18 , 1],
+      type: 'poly'
+  };
+  for (var i = 0; i < locations.length; i++) {
+    var beach = locations[i];
+    var myLatLng = new google.maps.LatLng(beach[1], beach[2]);
+    var marker = new google.maps.Marker({
+        position: myLatLng,
+        map: map,
+        icon: image,
+        shape: shape,
+        title: beach[0],
+   //     zIndex: beach[3]
+    });
+    attachSecretMessage(marker, i);
+  }
+
+ // The five markers show a secret message when clicked
+// but that message is not within the marker's instance data
+function attachSecretMessage(marker, num) {
+ 
+  var message = beaches;
+  var infowindow = new google.maps.InfoWindow({
+    content: '<div id="content">'+ 
+              message[num] +
+             '</div>'      
+  });
+
+  google.maps.event.addListener(marker, 'click', function() {
+    infowindow.open(marker.get('map'), marker);
+  });
+}
+
+}
+
+google.maps.event.addDomListener(window, 'load', initialize);
+
+    </script>
+  </head>
+  <body>
+    <div id="map-canvas"></div>
+  </body>
+</html>

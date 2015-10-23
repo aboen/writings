@@ -1,0 +1,316 @@
+[root@server ~]# yum  install  xl2tpd openswan ppp
+Loaded plugins: fastestmirror, priorities, protectbase, replace
+Loading mirror speeds from cached hostfile
+ * base: centosv4.centos.org
+ * extras: centosi5.centos.org
+ * updates: centosk2.centos.org
+0 packages excluded due to repository protections
+Setting up Install Process
+Resolving Dependencies
+--> Running transaction check
+---> Package openswan.x86_64 0:2.6.32-21.el6_4 will be installed
+---> Package ppp.x86_64 0:2.4.5-5.el6 will be installed
+---> Package xl2tpd.x86_64 0:1.3.1-7.el6 will be installed
+--> Finished Dependency Resolution
+
+Dependencies Resolved
+
+=======================================================================================================
+ Package              Arch               Version                       Repository                 Size
+=======================================================================================================
+Installing:
+ openswan             x86_64             2.6.32-21.el6_4               updates                   894 k
+ ppp                  x86_64             2.4.5-5.el6                   base                      323 k
+ xl2tpd               x86_64             1.3.1-7.el6                   kloxo-mr-epel             128 k
+
+Transaction Summary
+=======================================================================================================
+Install       3 Package(s)
+
+Total download size: 1.3 M
+Installed size: 3.7 M
+Is this ok [y/N]: y
+Downloading Packages:
+(1/3): openswan-2.6.32-21.el6_4.x86_64.rpm                                      | 894 kB     00:00
+(2/3): ppp-2.4.5-5.el6.x86_64.rpm                                               | 323 kB     00:00
+(3/3): xl2tpd-1.3.1-7.el6.x86_64.rpm                                            | 128 kB     00:00
+-------------------------------------------------------------------------------------------------------
+Total                                                                   44 kB/s | 1.3 MB     00:30
+Running rpm_check_debug
+Running Transaction Test
+Transaction Test Succeeded
+Running Transaction
+  Installing : ppp-2.4.5-5.el6.x86_64                                                              1/3
+  Installing : xl2tpd-1.3.1-7.el6.x86_64                                                           2/3
+  Installing : openswan-2.6.32-21.el6_4.x86_64                                                     3/3
+  Verifying  : openswan-2.6.32-21.el6_4.x86_64                                                     1/3
+  Verifying  : xl2tpd-1.3.1-7.el6.x86_64                                                           2/3
+  Verifying  : ppp-2.4.5-5.el6.x86_64                                                              3/3
+
+Installed:
+  openswan.x86_64 0:2.6.32-21.el6_4      ppp.x86_64 0:2.4.5-5.el6      xl2tpd.x86_64 0:1.3.1-7.el6
+
+Complete!
+
+KONFIGURASI
+[root@server ~]# cd /etc
+[root@server etc]# vi  ipsec.conf
+edit sehinga menjadi seprti :
+# /etc/ipsec.conf - Openswan IPsec configuration file
+#
+# Manual:     ipsec.conf.5
+#
+# Please place your own config files in /etc/ipsec.d/ ending in .conf
+
+version 2.0     # conforms to second version of ipsec.conf specification
+
+# basic configuration
+config setup
+        # Debug-logging controls:  "none" for (almost) none, "all" for lots.
+        # klipsdebug=none
+        # plutodebug="control parsing"
+        # For Red Hat Enterprise Linux and Fedora, leave protostack=netkey
+        protostack=netkey
+        nat_traversal=yes
+        virtual_private=%v4:10.10.0.0/24,%v4:192.168.0.0/16,%v4:172.16.0.0/12
+        oe=off
+        # Enable this if you see "failed to find any available worker"
+        # nhelpers=0
+
+#You may put your configuration (.conf) file in the "/etc/ipsec.d/" and uncomment this.
+include /etc/ipsec.d/*.conf
+
+[root@server etc]# cd ipsec.d
+buat file l2tp_psk.conf ( nama file terserah asal ber extensi .conf ) isi nya :
+conn L2TP-PSK-NAT
+				rightsubnet=vhost:%priv
+				also=L2TP-PSK-noNAT
+
+		conn L2TP-PSK-noNAT
+				authby=secret
+				pfs=no
+				auto=add
+				keyingtries=3
+				rekey=no
+			# Apple iOS doesn't send delete notify so we need dead peer detection
+			# to detect vanishing clients
+				dpddelay=30
+				dpdtimeout=120
+				dpdaction=clear
+			# Set ikelifetime and keylife to same defaults windows has
+				ikelifetime=8h
+				keylife=1h
+				type=transport
+			# Replace IP address with your local IP (private, behind NAT IP is okay as w                          ell)
+				left=10.10.0.1
+			# For updated Windows 2000/XP clients,
+			# to support old clients as well, use leftprotoport=17/%any
+				leftprotoport=17/1701
+				right=%any
+				rightprotoport=17/%any
+			#force all to be nat'ed. because of iOS
+				forceencaps=yes
+
+
+buat file secrets
+buat key untk share psk
+[root@server etc]#  ipsec newhostkey --output /etc/ipsec.secrets --bits 2048 --verbose --configdir /etc/pki/nssdb/
+/usr/libexec/ipsec/newhostkey: WARNING: file `/etc/ipsec.secrets' exists, appending to it
+getting 60 random bytes from /dev/random...
+Generated RSA key pair using the NSS database
+output...
+
+[root@server etc]# vi /etc/ipsec.secrets
+tambahkan isinya :
+23.229.123.163  %any:  PSK "rahasia"
+[root@server etc]# chown root:root /etc/ipsec.secrets
+[root@server etc]# chmod 600 /etc/ipsec.secrets
+
+[root@server etc]# vi /etc/xl2tpd/xl2tpd.conf
+Isinya :
+;
+; This is a minimal sample xl2tpd configuration file for use
+; with L2TP over IPsec.
+;
+; The idea is to provide an L2TP daemon to which remote Windows L2TP/IPsec
+; clients connect. In this example, the internal (protected) network
+; is 192.168.1.0/24.  A special IP range within this network is reserved
+; for the remote clients: 192.168.1.128/25
+; (i.e. 192.168.1.128 ... 192.168.1.254)
+;
+; The listen-addr parameter can be used if you want to bind the L2TP daemon
+; to a specific IP address instead of to all interfaces. For instance,
+; you could bind it to the interface of the internal LAN (e.g. 192.168.1.98
+; in the example below). Yet another IP address (local ip, e.g. 192.168.1.99)
+; will be used by xl2tpd as its address on pppX interfaces.
+
+
+; IMPORTANT: always set listen-addr to a specific address, to work around a
+; udpfromto bug!!!
+
+
+[global]
+listen-addr = 23.229.123.163
+;
+; requires openswan-2.5.18 or higher - Also does not yet work in combination
+; with kernel mode l2tp as present in linux 2.6.23+
+;ipsec saref = yes
+; Use refinfo of 22 if using an SAref kernel patch based on openswan 2.6.35 or
+;  when using any of the SAref kernel patches for kernels up to 2.6.35.
+; ipsec refinfo = 30
+;
+force userspace = yes
+;
+; debug tunnel = yes
+
+[lns default]
+ip range = 10.10.0.2-10.10.0.30
+local ip = 10.10.0.1
+; leave chap unspecified for maximum compatibility with windows, iOS, etc
+require chap = yes
+refuse pap = yes
+require authentication = yes
+name = LinuxVPNserver
+ppp debug = yes
+pppoptfile = /etc/ppp/options.xl2tpd
+length bit = yes
+
+[root@server ipsec.d]# vi /etc/ppp/options.xl2tpd
+Isinya :
+ipcp-accept-local
+ipcp-accept-remote
+ms-dns  8.8.8.8
+# ms-dns  192.168.1.1
+# ms-dns  192.168.1.3
+# ms-wins 192.168.1.2
+# ms-wins 192.168.1.4
+noccp
+auth
+crtscts
+idle 1800
+mtu 1410
+mru 1410
+nodefaultroute
+debug
+lock
+proxyarp
+connect-delay 5000
+
+
+
+[root@server etc]# vi /etc/ppp/chap-secrets
+file untuk login isinya :
+# Secrets for authentication using CHAP
+# client        server  secret         IP addresses
+aboen   		*       rahasia 		*
+~
+~
+
+Tambahkan :
+[root@server etc]# chkconfig xl2tpd on
+[root@server etc]# chkconfig ipsec on
+[root@server etc]# service ipsec restart
+ipsec_setup: Stopping Openswan IPsec...
+ipsec_setup: Starting Openswan IPsec 2.6.32...
+ipsec_setup: multiple ip addresses, using  127.0.0.1 on venet0
+ipsec_setup: /usr/libexec/ipsec/addconn Non-fips mode set in /proc/sys/crypto/fips_enabled
+ipsec_setup: /usr/libexec/ipsec/addconn Non-fips mode set in /proc/sys/crypto/fips_enabled
+[root@server etc]# service xl2tpd restart
+Stopping xl2tpd:                                           [  OK  ]
+Starting xl2tpd:                                           [  OK  ]
+
+
+ipsec.conf
+
+----
+conn L2TP-PSK-NAT
+        rightsubnet=vhost:%priv
+        also=L2TP-PSK-noNAT
+
+conn L2TP-PSK-noNAT
+        authby=secret
+        ike=3des-md5;modp1024,aes-sha1;modp1536
+        pfs=no
+        auto=add
+        keyingtries=3
+        rekey=no
+# Apple iOS doesn't send delete notify so we need dead peer detection
+# to detect vanishing clients
+        dpddelay=30
+        dpdtimeout=120
+        dpdaction=clear
+# Set ikelifetime and keylife to same defaults windows has
+        ikelifetime=8h
+        keylife=1h
+#       type=transport
+        type=passthrough
+# Replace IP address with your local IP (private, behind NAT IP is okay as w                          ell)
+        left=10.10.0.1
+# For updated Windows 2000/XP clients,
+# to support old clients as well, use leftprotoport=17/%any
+        leftprotoport=17/1701
+        right=%any
+        rightprotoport=17/%any
+#force all to be nat'ed. because of iOS
+        forceencaps=yes
+---------------
+conn L2TP-PSK-NAT
+        rightsubnet=vhost:%priv
+        also=L2TP-PSK-noNAT
+
+conn L2TP-PSK-noNAT
+        #
+        # Configuration for one user with any type of IPsec/L2TP client
+        # including the updated Windows 2000/XP (MS KB Q818043), but
+        # excluding the non-updated Windows 2000/XP.
+        #
+        #
+        # Use a Preshared Key. Disable Perfect Forward Secrecy.
+        #
+        # PreSharedSecret needs to be specified in /etc/ipsec.secrets as
+        # YourIPAddress  %any: "sharedsecret"
+        authby=secret
+        pfs=no
+        auto=add
+        keyingtries=3
+        # we cannot rekey for %any, let client rekey
+        rekey=no
+        # Apple iOS doesn't send delete notify so we need dead peer detection
+        # to detect vanishing clients
+        dpddelay=10
+        dpdtimeout=90
+        dpdaction=clear
+        # Set ikelifetime and keylife to same defaults windows has
+        ikelifetime=8h
+        keylife=1h
+        # l2tp-over-ipsec is transport mode
+        type=transport
+        #
+        left=YourGatewayIP
+        #
+        # For updated Windows 2000/XP clients,
+        # to support old clients as well, use leftprotoport=17/%any
+        leftprotoport=17/1701
+        #
+        # The remote user.
+        #
+        right=%any
+        # Using the magic port of "%any" means "any one single port". This is
+        # a work around required for Apple OSX clients that use a randomly
+        # high port.
+        rightprotoport=17/%any
+
+# Normally, KLIPS drops all plaintext traffic from IP's it has a crypted
+# connection with. With L2TP clients behind NAT, that's not really what
+# you want. The connection below allows both l2tp/ipsec and plaintext
+# connections from behind the same NAT router.
+# The l2tpd use a leftprotoport, so they are more specific and will be used
+# first. Then, packets for the host on different ports and protocols (eg ssh)
+# will match this passthrough conn.
+conn passthrough-for-non-l2tp
+        type=passthrough
+        left=YourServerIP
+        leftnexthop=YourGwIP
+        right=0.0.0.0
+        rightsubnet=0.0.0.0/0
+        auto=route

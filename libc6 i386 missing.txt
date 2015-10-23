@@ -1,0 +1,27 @@
+
+
+dpkg: warning: files list file for package 'liblzma5:amd64' missing; assuming package has no files currently installed
+dpkg: warning: files list file for package 'libavahi-common-data:amd64' missing; assuming package has no files currently installed
+(Reading database ... 22456 files and directories currently installed.)
+
+liblzma5:amd64
+libavahi-common-data:amd64
+
+dpkg: warning: files list file for package 'libc6:i386' missing; assuming package has no files currently installed
+dpkg: warning: files list file for package 'libtinfo5:i386' missing; assuming package has no files currently installed
+dpkg: warning: files list file for package 'liblzma5:i386' missing; assuming package has no files currently installed
+dpkg: warning: files list file for package 'libavahi-common-data:i386' missing; assuming package has no files currently installed
+
+root@svr3:~# ls  /var/cache/apt/archives/libc6*
+/var/cache/apt/archives/libc6_2.13-38_i386.deb
+root@svr3:~# ls  /var/cache/apt/archives/libtinfo5*
+/var/cache/apt/archives/libtinfo5_5.9-10_i386.deb
+root@svr3:~# ls  /var/cache/apt/archives/liblzma5*
+/var/cache/apt/archives/liblzma5_5.1.1alpha+20120614-2_i386.deb
+root@svr3:~# ls  /var/cache/apt/archives/libavahi-common-data*
+/var/cache/apt/archives/libavahi-common-data_0.6.31-2_i386.deb
+
+root@svr3:~# dpkg-deb -c  /var/cache/apt/archives/libc6_2.13-38_i386.deb | awk {'print $6'} | cut -f2- -d. | sed 's|^/$|/.|' | sed 's|/$||' > /var/lib/dpkg/info/libc6:i386.list
+root@svr3:~# dpkg-deb -c /var/cache/apt/archives/libtinfo5_5.9-10_i386.deb | awk {'print $6'} | cut -f2- -d. | sed 's|^/$|/.|' | sed 's|/$||' > /var/lib/dpkg/info/libtinfo5:i386.list
+root@svr3:~# dpkg-deb -c /var/cache/apt/archives/liblzma5_5.1.1alpha+20120614-2_i386.deb | awk {'print $6'} | cut -f2- -d. | sed 's|^/$|/.|' | sed 's|/$||' > /var/lib/dpkg/info/liblzma5:i386.list
+root@svr3:~# dpkg-deb -c /var/cache/apt/archives/libavahi-common-data_0.6.31-2_i386.deb | awk {'print $6'} | cut -f2- -d. | sed 's|^/$|/.|' | sed 's|/$||' > /var/lib/dpkg/info/libavahi-common-data:i386.list

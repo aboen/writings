@@ -1,0 +1,334 @@
+Install debian Server
+
+Tambah  sources.list
+root@daun:~# vi /etc/apt/sources.list
+isi dengan berikut atau tambahkan bila ada yang belum:
+
+deb http://ftp.us.debian.org/debian/ squeeze main
+deb-src http://ftp.us.debian.org/debian/ squeeze main
+
+deb http://security.debian.org/ squeeze/updates main
+deb-src http://security.debian.org/ squeeze/updates main
+
+# squeeze-updates, previously known as 'volatile'
+deb http://ftp.us.debian.org/debian/ squeeze-updates main
+deb-src http://ftp.us.debian.org/debian/ squeeze-updates main
+deb ftp://ftp.deb-multimedia.org squeeze main non-free
+deb-src ftp://ftp.deb-multimedia.org sid main
+deb http://packages.dotdeb.org squeeze all
+deb-src http://packages.dotdeb.org squeeze all
+
+root@daun:~# apt-get update
+Hit http://security.debian.org squeeze/updates Release.gpg
+Ign http://security.debian.org/ squeeze/updates/main Translation-en
+Ign http://security.debian.org/ squeeze/updates/main Translation-en_US
+Hit http://ftp.us.debian.org squeeze Release.gpg
+Ign http://ftp.us.debian.org/debian/ squeeze/main Translation-en
+Ign http://ftp.us.debian.org/debian/ squeeze/main Translation-en_US
+Hit http://ftp.us.debian.org squeeze-updates Release.gpg
+Ign http://ftp.us.debian.org/debian/ squeeze-updates/main Translation-en
+Ign http://ftp.us.debian.org/debian/ squeeze-updates/main Translation-en_US
+Hit http://security.debian.org squeeze/updates Release
+Hit http://ftp.us.debian.org squeeze Release
+Hit http://security.debian.org squeeze/updates/main Sources
+Hit http://ftp.us.debian.org squeeze-updates Release
+Hit http://security.debian.org squeeze/updates/main i386 Packages
+Get:1 http://packages.dotdeb.org squeeze Release.gpg [836 B]
+Ign http://packages.dotdeb.org/ squeeze/all Translation-en
+Ign http://packages.dotdeb.org/ squeeze/all Translation-en_US
+Hit http://ftp.us.debian.org squeeze/main Sources
+Hit http://ftp.us.debian.org squeeze/main i386 Packages
+Hit http://ftp.us.debian.org squeeze-updates/main Sources/DiffIndex
+Hit http://ftp.us.debian.org squeeze-updates/main i386 Packages/DiffIndex
+Hit http://ftp.us.debian.org squeeze-updates/main i386 Packages
+Get:2 http://packages.dotdeb.org squeeze Release [2,203 B]
+Ign http://packages.dotdeb.org squeeze Release
+Get:3 http://packages.dotdeb.org squeeze/all Sources [4,405 B]
+Get:4 http://packages.dotdeb.org squeeze/all i386 Packages [20.1 kB]
+Get:5 ftp://ftp.deb-multimedia.org squeeze Release.gpg [198 B]
+Get:6 ftp://ftp.deb-multimedia.org/ squeeze/main Translation-en
+Ign ftp://ftp.deb-multimedia.org/ squeeze/main Translation-en
+Get:7 ftp://ftp.deb-multimedia.org/ squeeze/main Translation-en_US
+Ign ftp://ftp.deb-multimedia.org/ squeeze/main Translation-en_US
+Get:8 ftp://ftp.deb-multimedia.org/ squeeze/non-free Translation-en
+Ign ftp://ftp.deb-multimedia.org/ squeeze/non-free Translation-en
+Get:9 ftp://ftp.deb-multimedia.org/ squeeze/non-free Translation-en_US
+Ign ftp://ftp.deb-multimedia.org/ squeeze/non-free Translation-en_US
+Get:10 ftp://ftp.deb-multimedia.org sid Release.gpg [198 B]
+Get:11 ftp://ftp.deb-multimedia.org squeeze Release [24.4 kB]
+Ign ftp://ftp.deb-multimedia.org squeeze Release
+Get:12 ftp://ftp.deb-multimedia.org sid Release [32.6 kB]
+Ign ftp://ftp.deb-multimedia.org sid Release
+Get:13 ftp://ftp.deb-multimedia.org squeeze/main i386 Packages [122 kB]
+Get:14 ftp://ftp.deb-multimedia.org squeeze/non-free i386 Packages [5,581 B]
+Get:15 ftp://ftp.deb-multimedia.org sid/main Sources [53.1 kB]
+Fetched 266 kB in 10s (26.4 kB/s)
+Reading package lists... Done
+W: GPG error: http://packages.dotdeb.org squeeze Release: The following signatures couldn't be verified because the public key is not available: NO_PUBKEY E9C74FEEA2098A6E
+W: GPG error: ftp://ftp.deb-multimedia.org squeeze Release: The following signatures couldn't be verified because the public key is not available: NO_PUBKEY 07DC563D1F41B907
+W: GPG error: ftp://ftp.deb-multimedia.org sid Release: The following signatures couldn't be verified because the public key is not available: NO_PUBKEY 07DC563D1F41B907
+
+W: GPG error: karena  signature dari paket tidak tersedia, akan di tanya apakah akan di install setiap kali akan menginstall aplikasi
+
+Untuk yang dotdeb.org bisa memverifikasi dengan cara berikut, sehingga tidak di tanya kembali.
+root@daun:~# wget http://www.dotdeb.org/dotdeb.gpg
+--2012-12-03 14:08:05--  http://www.dotdeb.org/dotdeb.gpg
+Resolving www.dotdeb.org... 88.190.17.153
+Connecting to www.dotdeb.org|88.190.17.153|:80... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 5299 (5.2K) [application/octet-stream]
+Saving to: âdotdeb.gpgâ
+
+100%[===================================================================================>] 5,299       --.-K/s   in 0s
+
+2012-12-03 14:08:06 (329 MB/s) - âdotdeb.gpgâ
+
+root@daun:~# cat dotdeb.gpg | apt-key add -
+OK
+
+root@daun:~# apt-get upgrade
+Reading package lists... Done
+Building dependency tree
+Reading state information... Done
+0 upgraded, 0 newly installed, 0 to remove and 0 not upgraded.
+
+INSTALL NGINX WEBSERVER
+root@daun:~# apt-cache search nginx
+libapache2-mod-upload-progress - upload progress support for the Apache web server
+collectd-core - statistics collection and monitoring daemon (core system)
+fcgiwrap - simple server to run CGI applications over FastCGI
+gitweb - fast, scalable, distributed revision control system (web interface)
+gunicorn - Event-based HTTP/WSGI server
+nginx-dbg - Debugging symbols for nginx
+nginx - small, powerful, scalable web/proxy server
+nginx-common - small, powerful, scalable web/proxy server - common files
+nginx-doc - small, powerful, scalable web/proxy server - documentation
+nginx-extras - nginx web/proxy server (extended version)
+nginx-extras-dbg - nginx web/proxy server (extended version) - debugging symbols
+nginx-full - nginx web/proxy server (standard version)
+nginx-full-dbg - nginx web/proxy server (standard version) - debugging symbols
+nginx-light - nginx web/proxy server (basic version)
+nginx-light-dbg - nginx web/proxy server (basic version) - debugging symbols
+nginx-naxsi - nginx web/proxy server (version with naxsi)
+nginx-naxsi-dbg - nginx web/proxy server (version with naxsi) - debugging symbols
+nginx-naxsi-ui - nginx web/proxy server - naxsi configuration front-end
+nginx-passenger - nginx web/proxy server (Passenger version)
+nginx-passenger-dbg - nginx web/proxy server (Passenger version) - debugging symbols
+ruby-passenger - Rails and Rack support for Apache2 and Nginx
+root@daun:~#
+root@daun:~# apt-get install nginx-full
+Reading package lists... Done
+Building dependency tree
+Reading state information... Done
+The following extra packages will be installed:
+  libgd2-noxpm libjpeg62 libpng12-0 libxslt1.1 nginx-common
+Suggested packages:
+  libgd-tools
+The following NEW packages will be installed:
+  libgd2-noxpm libjpeg62 libpng12-0 libxslt1.1 nginx-common nginx-full
+0 upgraded, 6 newly installed, 0 to remove and 0 not upgraded.
+Need to get 1,284 kB of archives.
+After this operation, 2,868 kB of additional disk space will be used.
+Do you want to continue [Y/n]? Y
+WARNING: The following packages cannot be authenticated!
+  nginx-common nginx-full
+Install these packages without verification [y/N]? y
+
+INSTALL PHP5
+root@daun:~# apt-cache search php5
+cakephp - MVC rapid application development framework for PHP
+dwoo - PHP5 template engine
+php5-exactimage - fast image manipulation library (PHP bindings)
+libgv-php5 - Php5 bindings for graphviz
+jffnms - web-based Network Management System (NMS) for IP networks
+php5-lasso - Library for Liberty Alliance and SAML protocols - PHP 5 bindings
+libexpect-php5 - expect module for PHP 5
+libphp-jpgraph-examples - Object oriented graph library for php5 (examples)
+libphp-jpgraph - Object oriented graph library for php5
+libxmpp-php - PHP library allowing communication with XMPP servers
+php5-mapscript - php5-cgi module for MapServer
+php5-ming - Ming module for php5
+php5-uuid - OSSP uuid module for php5
+php5-adodb - Extension optimising the ADOdb database abstraction library
+php5-auth-pam - A PHP5 extension for PAM authentication
+php-auth - PHP PEAR modules for creating an authentication system
+php-codesniffer - tokenises PHP code and detects violations of a defined set of coding standards
+php-doc - Documentation for PHP5
+php5-idn - PHP API for the IDNA library
+php5-ps - ps module for PHP 5
+php5-radius - PECL radius module for PHP 5
+php5-sasl - Cyrus SASL extension for PHP 5
+php5-svn - PHP Bindings for the Subversion Revision control system
+php5-tokyo-tyrant - PHP interface to Tokyo Cabinet's network interface, Tokyo Tyrant
+phpunit - Unit testing suite for PHP5
+php5-librdf - PHP5 language bindings for the Redland RDF library
+php5-remctl - PECL module for Kerberos-authenticated command execution
+libapache2-mod-php5 - server-side, HTML-embedded scripting language (Apache 2 module)
+libapache2-mod-php5filter - server-side, HTML-embedded scripting language (apache 2 filter module)
+php-pear - PEAR - PHP Extension and Application Repository
+php5 - server-side, HTML-embedded scripting language (metapackage)
+php5-apc - apc module for php5
+php5-cgi - server-side, HTML-embedded scripting language (CGI binary)
+php5-cli - command-line interpreter for the php5 scripting language
+php5-common - Common files for packages built from the php5 source
+php5-curl - CURL module for php5
+php5-dbg - Debug symbols for PHP5
+php5-dev - Files for PHP5 module development
+php5-enchant - Enchant module for php5
+php5-ffmpeg - ffmpeg module for php5
+php5-fpm - server-side, HTML-embedded scripting language (FPM-CGI binary)
+php5-gd - GD module for php5
+php5-gearman - gearman module for php5
+php5-geoip - geoip module for php5
+php5-gmp - GMP module for php5
+php5-http - http module for php5
+php5-imagick - imagick module for php5
+php5-imap - IMAP module for php5
+php5-interbase - interbase/firebird module for php5
+php5-intl - internationalisation module for php5
+php5-ldap - LDAP module for php5
+php5-mcrypt - MCrypt module for php5
+php5-memcache - memcache module for php5
+php5-memcached - memcached module for php5
+php5-mysql - MySQL module for php5
+php5-odbc - ODBC module for php5
+php5-pgsql - PostgreSQL module for php5
+php5-pinba - pinba module for php5
+php5-pspell - pspell module for php5
+php5-recode - recode module for php5
+php5-redis - redis module for php5
+php5-snmp - SNMP module for php5
+php5-spplus - spplus module for php5
+php5-sqlite - SQLite module for php5
+php5-ssh2 - ssh2 module for php5
+php5-suhosin - suhosin module for php5
+php5-sybase - Sybase / MS SQL Server module for php5
+php5-tidy - tidy module for php5
+php5-xcache - xcache module for php5
+php5-xdebug - xdebug module for php5
+php5-xhprof - xhprof module for php5
+php5-xmlrpc - XML-RPC module for php5
+php5-xsl - XSL module for php5
+
+root@daun:~# apt-get install php5-fpm php5-mysql php5-suhosin php5-xmlrpc  php5-xsl php-pear php5-curl php5-gd php5-mcrypt
+Reading package lists... Done
+Building dependency tree
+Reading state information... Done
+The following extra packages will be installed:
+  libcurl3 libltdl7 libmcrypt4 libonig2 libqdbm14 libssh2-1 libt1-5 libxpm4 php5-cli php5-common
+Suggested packages:
+  libmcrypt-dev mcrypt php5-dev
+The following NEW packages will be installed:
+  libcurl3 libltdl7 libmcrypt4 libonig2 libqdbm14 libssh2-1 libt1-5 libxpm4 php-pear php5-cli php5-common php5-curl php5-fpm php5-gd
+  php5-mcrypt php5-mysql php5-suhosin php5-xmlrpc php5-xsl
+0 upgraded, 19 newly installed, 0 to remove and 0 not upgraded.
+Need to get 8,906 kB of archives.
+After this operation, 25.2 MB of additional disk space will be used.
+Do you want to continue [Y/n]? Y
+WARNING: The following packages cannot be authenticated!
+  php5-common php5-fpm php5-cli php-pear php5-curl php5-gd php5-mcrypt php5-mysql php5-suhosin php5-xmlrpc php5-xsl
+Install these packages without verification [y/N]? y
+
+INSTALL MYSQL
+root@daun:~# apt-get install  mysql-server-5.5  mysql-client-5.5
+Reading package lists... Done
+Building dependency tree
+Reading state information... Done
+The following extra packages will be installed:
+  libaio1 libdbd-mysql-perl libdbi-perl libhtml-template-perl libmysqlclient16 libnet-daemon-perl libplrpc-perl mysql-client-core-5.5
+  mysql-common mysql-server-core-5.5
+Suggested packages:
+  libipc-sharedcache-perl libterm-readkey-perl tinyca
+The following NEW packages will be installed:
+  libaio1 libdbd-mysql-perl libdbi-perl libhtml-template-perl libmysqlclient16 libnet-daemon-perl libplrpc-perl mysql-client-5.5
+  mysql-client-core-5.5 mysql-common mysql-server-5.5 mysql-server-core-5.5
+0 upgraded, 12 newly installed, 0 to remove and 0 not upgraded.
+Need to get 28.7 MB of archives.
+After this operation, 98.9 MB of additional disk space will be used.
+Do you want to continue [Y/n]? Y
+WARNING: The following packages cannot be authenticated!
+  mysql-common mysql-client-core-5.5 mysql-client-5.5 mysql-server-core-5.5 mysql-server-5.5
+Install these packages without verification [y/N]? y
+
+KONFIGURASI WEB SERVER NGINX 
+edit file configurasi di /etc/nginx/nginx.conf (kalau memang di butuhkan)saat ini masih belum dengan konfigurasi standar sudah bisa jalan dengan baik.
+edit file configuras dari masing-masing web (domain) jika menggunakan virtual domain ( satu server dengan banyak domain yang di hoasting) letaknya di:
+/etc/nginx/sites-enabled/default
+# vi /etc/nginx/sites-enabled/default
+edit bagian berikut :
+
+	root /usr/share/nginx/html; # document root bisa di letakan di mana saja secara default adalah seprti itu, saya akan merubah ke /home/www
+        index index.html index.htm; # document index tambahakan index.php setelah index.
+
+sehingga menjadi :
+
+	root /home/www;
+	index index.php index.html index.html;
+
+Konfigurasi PHP, hapus #  
+        # pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000
+        #
+        #location ~ \.php$ {
+        #       fastcgi_split_path_info ^(.+\.php)(/.+)$;
+        #       # NOTE: You should have "cgi.fix_pathinfo = 0;" in php.ini
+        #
+        #       # With php5-cgi alone:
+        #       fastcgi_pass 127.0.0.1:9000;
+        #       # With php5-fpm:
+        #       fastcgi_pass unix:/var/run/php5-fpm.sock;
+        #       fastcgi_index index.php;
+        #       include fastcgi_params;
+        #}
+
+Sehingga menjadi :
+        # pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000
+        #
+        location ~ \.php$ {
+                fastcgi_split_path_info ^(.+\.php)(/.+)$;
+        #       # NOTE: You should have "cgi.fix_pathinfo = 0;" in php.ini
+        #
+        #       # With php5-cgi alone:
+        #       fastcgi_pass 127.0.0.1:9000;
+        #       # With php5-fpm:
+                fastcgi_pass unix:/var/run/php5-fpm.sock;
+                fastcgi_index index.php;
+                include fastcgi_params;
+        }
+
+KONFIGURASI PHP-FPM
+edit file konfigurasi di /etc/php5/fpm/pool.d/www.conf
+
+#vi /etc/php5/fpm/pool.d/www.conf
+rubah bagian listen dari :
+
+	listen = 127.0.0.1:9000
+
+Menjadi :
+
+	listen = /var/run/php5-fpm.sock
+
+
+Restart web server NGINX  dan PHP5-FPM
+root@daun:/# /etc/init.d/nginx restart
+Restarting nginx: nginx.
+
+root@daun:/# /etc/init.d/php5-fpm restart
+Restarting PHP5 FastCGI Process Manager: php5-fpm.
+
+Buat Folder DOCUMENT ROOT
+root@daun:/# mkdir /home/www
+root@daun:/# chown www-data:www-data  /home/www
+root@daun:/# cd /home/www
+
+Buat file php info untuk melihat apakah configurasi sudah benar
+root@daun:/home/www# vi index.php
+
+isi dengan :
+	<?php phpinfo(); ?>
+
+Akses lewat browser  kalau diserver itu sendiri urlnya isi dengan localhost atau kalau dari komputer lain akses lewat IP server tersebut.
+Bila keluar keterangan konfigurasi dari php dan web server maka installasi dan konfigurasi sudah berhasil.
+
+
+
+

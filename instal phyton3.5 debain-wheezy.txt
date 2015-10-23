@@ -1,0 +1,88 @@
+root@svr3:~/Python-3.5.0# lsb_release -a
+No LSB modules are available.
+Distributor ID: Debian
+Description:    Debian GNU/Linux 7.9 (wheezy)
+Release:        7.9
+Codename:       wheezy
+
+root@svr3:~# wget https://www.python.org/ftp/python/3.5.0/Python-3.5.0.tgz
+--2015-10-22 23:45:47--  https://www.python.org/ftp/python/3.5.0/Python-3.5.0.tgz
+Resolving www.python.org (www.python.org)... 23.235.40.223
+Connecting to www.python.org (www.python.org)|23.235.40.223|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 20053428 (19M) [application/octet-stream]
+Saving to: `Python-3.5.0.tgz'
+
+100%[====================================================================================================================>] 20,053,428  36.8M/s   in 0.5s
+
+2015-10-22 23:45:50 (36.8 MB/s) - `Python-3.5.0.tgz' saved [20053428/20053428]
+
+root@svr3:~# tar -zxf Python-3.5.0.tgz
+root@svr3:~# dir
+Python-3.5.0  Python-3.5.0.tgz  backup  torrent
+root@svr3:~# cd Python-3.5.0
+root@svr3:~/Python-3.5.0#
+
+Build Instructions
+------------------
+
+On Unix, Linux, BSD, OSX, and Cygwin:
+
+    ./configure
+    make
+    make test
+    sudo make install
+
+This will install Python as python3.
+
+root@svr3:~/Python-3.5.0# ./configure
+root@svr3:~/Python-3.5.0# make
+root@svr3:~/Python-3.5.0# make install
+...
+Collecting setuptools
+Collecting pip
+Installing collected packages: setuptools, pip
+Successfully installed pip-7.1.2 setuptools-18.2
+
+root@svr3:~/Python-3.5.0# make clean
+find . -depth -name '__pycache__' -exec rm -rf {} ';'
+find . -name '*.py[co]' -exec rm -f {} ';'
+find . -name '*.[oa]' -exec rm -f {} ';'
+find . -name '*.s[ol]' -exec rm -f {} ';'
+find . -name '*.so.[0-9]*.[0-9]*' -exec rm -f {} ';'
+find build -name 'fficonfig.h' -exec rm -f {} ';' || true
+find build -name '*.py' -exec rm -f {} ';' || true
+find build -name '*.py[co]' -exec rm -f {} ';' || true
+rm -f pybuilddir.txt
+rm -f Lib/lib2to3/*Grammar*.pickle
+rm -f Programs/_testembed Programs/_freeze_importlib
+
+root@svr3:~/Python-3.5.0# pip3 install uwsgi
+Collecting uwsgi
+  Downloading uwsgi-2.0.11.2.tar.gz (782kB)
+    100% |################################| 782kB 611kB/s
+Installing collected packages: uwsgi
+  Running setup.py install for uwsgi
+Successfully installed uwsgi-2.0.11.2
+
+root@svr3:~# su aboen
+aboen@svr3:/root$ cd /home/aboen/
+aboen@svr3:~$ mkdir python
+aboen@svr3:~$ cd python
+aboen@svr3:~/python$ python3 -m venv 35env
+aboen@svr3:~/python$ ls
+35env
+aboen@svr3:~/python$ cd 35env
+aboen@svr3:~/python/35env$ ls
+bin  include  lib  pyvenv.cfg
+
+aboen@svr3:~/python$ source 35env/bin/activate
+(35env) aboen@svr3:~/python$ pip install django==1.8
+Collecting django==1.8
+  Downloading Django-1.8-py2.py3-none-any.whl (6.2MB)
+    100% |################################| 6.2MB 85kB/s
+Installing collected packages: django
+Successfully installed django-1.8
+
+
+

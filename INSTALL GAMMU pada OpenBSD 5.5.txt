@@ -1,0 +1,69 @@
+INSTALL GAMMU pada OpenBSD 5.5
+http://wammu.eu/docs/manual/project/install.html#compiling-on-linux-unix-systems
+
+# wget http://sourceforge.net/projects/gammu/files/gammu/1.34.0/gammu-1.34.0.tar.gz
+
+# pkg_add cmake
+cmake-2.8.12.1p1:xz-5.0.5p0: ok
+cmake-2.8.12.1p1:libarchive-3.0.4p0: ok
+cmake-2.8.12.1p1: ok
+
+# pkg_add gmake
+gmake-4.0p0: ok
+
+# pkg_add libusb1-1.0.9p8.tgz
+libusb1-1.0.9p8: ok
+
+# pkg_add libdbi-0.8.3.tgz
+libdbi-0.8.3: ok
+
+# pkg_add db-4.6.21p0v0.tgz dbic++-0.6.0p5.tgz
+dbic++-0.6.0p5:e2fsprogs-1.42.7p0 (extracting)|*****                                                                                     | 6%
+
+# wget http://sourceforge.net/projects/unixodbc/files/unixODBC/2.3.2/unixODBC-2.3.2.tar.gz
+# ./configure
+# make
+# make install clean
+
+# cmake  build-configure -DWITH_NOKIA_SUPPORT=OFF  -DWITH_BLUETOOTH=OFF -DWITH_IRDA=OFF
+
+
+# tar -zxf gammu-1.34.0.tar.gz
+# cd gammu-1.34.0
+# ls
+.travis.yml     INSTALL.cs      INSTALL.pl      README.de       README.rst      docs            installer       utils
+AUTHORS         INSTALL.da      INSTALL.pt_BR   README.en_GB    admin           gammu           libgammu
+CMakeLists.txt  INSTALL.en_GB   Makefile        README.es       cmake           gammu-detect    locale
+COPYING         INSTALL.es      README.Python   README.id       configure       gammu.spec      python
+ChangeLog       INSTALL.id      README.cs       README.pl       contrib         helper          smsd
+INSTALL         INSTALL.it      README.da       README.pt_BR    description-pak include         tests
+
+# ./configure
+Wrapper script for configuring CMake for Gammu.
+
+This provides limited compatibility with configure, if you want full
+configuration control, use directly CMake. More information about CMake
+is available at <http://www.cmake.org>.
+
+-- The C compiler identification is GNU 4.2.1
+-- Check for working C compiler: /usr/bin/cc
+-- Check for working C compiler: /usr/bin/cc -- works
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Configuring Gammu 1.34.0
+-- Found PkgConfig: /usr/bin/pkg-config (found version "0.27.1")
+-- Could NOT find Doxygen (missing:  DOXYGEN_EXECUTABLE)
+-- .......
+-- .......
+-- Performing Test COMPILER_HAS_FNO_STRICT_ALIASING - Success
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /root/gammu-1.34.0/build-configure
+
+# cd build-configure
+# mkdir build
+# cd build
+# ls
+# cmake .. -DWITH_PYTHON=OFF  -DWITH_NOKIA_SUPPORT=OFF -DWITH_BLUETOOTH=OFF -DWITH_IRDA=OFF  -DINSTALL_DOC=OFF
+
+# gmake test

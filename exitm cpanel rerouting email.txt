@@ -1,0 +1,53 @@
+Pada Server 1:
+
+Masuk ke whm cpanel sebagi root ( akses tertinggi) sehinggi bisa melakukan configurasi pada " Exim Configuration Manager >> Advanced Editor "
+Atau lewat SSH edit file exim.conf biasanya terletak pada /etc atau /etc/exim
+
+Klik pada Advanced Editor (bila dari whm cpanel) kemudian cari sampai baris berikut:
+######################################################################
+#                      REWRITE CONFIGURATION                         #
+######################################################################
+
+# There are no rewriting specifications in this default configuration file.
+
+atau bagian :
+Section: PREROUTERS
+
+Kemudian tambahkan baris berikut pada kolom yang tersedia, letaknya beberapa baris setelah kata-kata di atas.
+special:
+driver = manualroute
+transport = remote_smtp
+route_list = yahoo.com server2.ngasalaja.com; yahoo.co.id server2.ngasalaja.com
+
+//special:
+//driver = manualroute
+//transport = remote_smtp
+//route_list = yahoo.com server2.ngasalaja.com; * server2.ngasalaja.com
+
+Simpan hasil penambahan tersebut kemudian restart exim ( bila dari whm cpanel setelah menekan tombol save pada baris paling bawah otomatis exim akan di restart ).
+Pada Server 2 :
+
+Karena tidak menggunakan control panel maka login dengan SSH.
+Edit file access bisanya letaknya pada /etc/mail
+Tambahkan baris berikut, ganti IP dengan IP dari server 1 :
+Connect:999.999.999.9                RELAY
+
+Save, kemudian buat databasenya dengan perintah makemap :
+makemap hash /etc/mail/access.db < /etc/mail/access
+
+Bila sendmail belum di buka untuk menerima email dari luar (default hanya untuk localhost) maka rubah pada bagian
+/etc/mail/sendmail.mc hapus bagian " Addr=127.0.0.1  " sehingga menjadi seperti
+
+DAEMON_OPTIONS(`Family=inet,  Name=MTA-v4, Port=smtp')dnl
+
+DAEMON_OPTIONS(`Family=inet,  Name=MSP-v4, Port=submission, M=Ea')dnl
+
+kemudian  jalankan perintah
+m4 /etc/mail/sendmail.mc > /etc/mail/sendmail.cf
+
+dan restart sendmail
+/etc/init.d/sendmail restart
+
+Seharusnya sekarang setiap pengiriman email dari server 1 dengan tujuan domain yahoo.com dan yahoo.co.id maka prosesnya akan di reroute ke server 2
+
+untuk lebih meyakinkan cek lewat konsol, log dari kedua server.

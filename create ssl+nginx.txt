@@ -1,0 +1,66 @@
+Create SSL+ NGINX
+root@svr2:/etc/nginx/sites-enabled# /usr/sbin/nginx -V
+nginx version: nginx/1.2.1
+TLS SNI support enabled
+configure arguments: --prefix=/etc/nginx --conf-path=/etc/nginx/nginx.conf --error-log-path=/var/log/nginx/error.log --http-client-body-temp-path=/var/lib/nginx/body --http-fastcgi-temp-path=/var/lib/nginx/fastcgi --http-log-path=/var/log/nginx/access.log --http-proxy-temp-path=/var/lib/nginx/proxy --http-scgi-temp-path=/var/lib/nginx/scgi --http-uwsgi-temp-path=/var/lib/nginx/uwsgi --lock-path=/var/lock/nginx.lock --pid-path=/var/run/nginx.pid --with-pcre-jit --with-http_ssl_module --without-mail_pop3_module --without-mail_smtp_module --without-mail_imap_module --without-http_uwsgi_module --without-http_scgi_module --with-ipv6 --with-http_stub_status_module --add-module=/tmp/buildd/nginx-1.2.1/debian/modules/nginx-upstream-fair --add-module=/tmp/buildd/nginx-1.2.1/debian/modules/nginx-cache-purge --add-module=/tmp/buildd/nginx-1.2.1/debian/modules/naxsi/naxsi_src
+root@svr2:/etc/nginx/sites-enabled# cd ..
+root@svr2:/etc/nginx# mkdir  /etc/nginx/ssl
+root@svr2:/etc/nginx# cd /etc/nginx/ssl/
+root@svr2:/etc/nginx/ssl# ls
+root@svr2:/etc/nginx/ssl# openssl genrsa -des3 -out self-ssl.key 2048
+Generating RSA private key, 2048 bit long modulus
+.........................................................................................................................+++
+.....+++
+e is 65537 (0x10001)
+Enter pass phrase for self-ssl.key:
+140209401648808:error:28069065:lib(40):UI_set_result:result too small:ui_lib.c:869:You must type in 4 to 8191 characters
+Enter pass phrase for self-ssl.key:
+140209401648808:error:28069065:lib(40):UI_set_result:result too small:ui_lib.c:869:You must type in 4 to 8191 characters
+Enter pass phrase for self-ssl.key:
+Verifying - Enter pass phrase for self-ssl.key:
+root@svr2:/etc/nginx/ssl# ls
+self-ssl.key
+root@svr2:/etc/nginx/ssl#  openssl req -new -key self-ssl.key -out self-ssl.csr
+Enter pass phrase for self-ssl.key:
+You are about to be asked to enter information that will be incorporated
+into your certificate request.
+What you are about to enter is what is called a Distinguished Name or a DN.
+There are quite a few fields but you can leave some blank
+For some fields there will be a default value,
+If you enter '.', the field will be left blank.
+-----
+Country Name (2 letter code) [AU]:ID
+State or Province Name (full name) [Some-State]:Jakarta
+Locality Name (eg, city) []:DKI Jakarta
+Organization Name (eg, company) [Internet Widgits Pty Ltd]:qurandaily
+Organizational Unit Name (eg, section) []:qurandaily
+Common Name (e.g. server FQDN or YOUR name) []:qurandaily.org
+Email Address []:admin@qurandaily.org
+
+Please enter the following 'extra' attributes
+to be sent with your certificate request
+A challenge password []:
+An optional company name []:
+root@svr2:/etc/nginx/ssl# ls
+self-ssl.csr  self-ssl.key
+root@svr2:/etc/nginx/ssl# openssl x509 -req -days 36500 -in self-ssl.csr -signkey self-ssl.key -out self-ssl.crt
+Signature ok
+subject=/C=ID/ST=Jakarta/L=DKI Jakarta/O=qurandaily/OU=qurandaily/CN=qurandaily.org/emailAddress=admin@qurandaily.org
+Getting Private key
+Enter pass phrase for self-ssl.key:
+root@svr2:/etc/nginx/ssl# ls
+self-ssl.crt  self-ssl.csr  self-ssl.key
+root@svr2:/etc/nginx/ssl# cd ..
+root@svr2:/etc/nginx# ls
+conf.d          koi-utf  mime.types        naxsi.rules  proxy_params  sites-available  ssl           win-utf
+fastcgi_params  koi-win  naxsi_core.rules  nginx.conf   scgi_params   sites-enabled    uwsgi_params
+root@svr2:/etc/nginx# cd sites-enabled
+root@svr2:/etc/nginx/sites-enabled# ls
+assunah  default  qurandaily
+
+
+tambahkan di conf :
+
+listen              443 ssl;
+ssl_certificate /etc/nginx/ssl/self-ssl.crt;
+ssl_certificate_key  /etc/nginx/ssl/self-ssl.key;

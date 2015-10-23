@@ -1,0 +1,1 @@
+ tail -fvn0 /usr/local/apache/logs/*log

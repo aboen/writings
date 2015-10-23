@@ -1,0 +1,48 @@
+Error Notice
+
+Notice: Undefined index: bla bla bla
+atau
+Notice: Undefined variable: bla bla bla
+
+Sebenarnya  peringantan ini bisa di abaikan karena bukan error. Peringatan ini akan muncul
+jika setingan default pada php.ini adalah " error_reporting = E_ALL " dan belum di modifikasi pada error_reporting nya.
+
+Cara cepat menanggulanginya dengan merubah error_reporting di php.ini atau menambahkan pada setiap awal script.
+Notice tersebut akan hilang bila kita merubah " error_reporting = E_ERROR|E_WARNING " 
+notifikasi akan keluar bila hanya bila ada errro dan warning saja.
+
+Cara yang lebih baik dari sisi programnya adalah melihat dimana letak notice tersebut dan memperbaikinya.
+Untuk " Notice: Undefined index: " biasanya terjadi jika variabel yang di ambil lewat metode $_GET[].
+Solusi nya dengan menambahkan fungsi isset() yang intinya mengecek apakah  nilai dari $_GET[] ada isinya (di set) dan bukan kosong (NULL).
+
+contoh:
+if (  (!$_GET['show'] == "basis") or (!$_GET['show'] == "tahunlulus") or (!$_GET['show'] == "rumpun") or (!$_GET['show'] == "sekolah") )   
+	{
+	// isinya
+	}
+Niat dari coding tersebut adalah " jika isi variabel show adalah bukan basis atau tahunlulus atau rumpun atau sekolah ".
+ini memicu keluarnya " Notice: Undefined index: " jika show tidak berisi apapun.
+Codingnya gak efisien ada notice pula :D .
+
+Biar gak keluar noticenya dirubah menjadi :
+if (!isset($_GET['show']))
+	{
+	//isinya
+	}
+Artinya : 	Jikal variabel "show" gak ada isinya / gak di set  maka jalankan yang di dalam braket "{ }" .
+			Kok jika gak ada isinya ? iya karena ada tanda seru ! di depan isset(), jadi kalau tanda ! nya di hapus maka 
+			bunyinya jika variable "show" ada isinya.
+
+Lanjut ....
+untuk " Notice: Undefined variable: " 
+Contoh :
+if (($showPage == 1) && ($page != 2))  echo "...";
+
+Kemungkinan akan keluar notice  Undefined Variable showPage karena variabel $showPage sekonyong-konyong ( kaya di cerita dongeng aja pake sekonyong2 :D ) 
+digunakan dalam kondisi atau syarat " IF " dan tidak di definisikan nilainya sebelumnya.
+
+Solusinya definisikan nilai dari variabel $showPage dulu sehinga menjadi :
+$showPage = 0;
+if (($showPage == 1) && ($page != 2))  echo "...";
+
+Mudah-mudahan berguna :D

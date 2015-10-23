@@ -1,0 +1,15 @@
+[share] dari siang bermain2 sama gammu versi 1.33.0 di windows 7 64 bit, install berhasil (pake yang exe) gammu dah bisa identify 
+tapi selalu error pass jalanin gammu-smsd.exe bilangnya Unknow DB driver, Padahal sudah di pastikan 99,999% konfigurasi smsdrc nya benar dengan pilih sql dan 
+driver native_mysql dan seting data basenya sudah benar semua termasuk table sudah di buat.
+
+Satu-satunya driver yang sukses jalan tanpa error Unknow DB driver adalah pake ODBC
+
+di kaskus di sarankan pake yang versi yang 1.25 di coba berhasil, tapi masih penasaran dengan yang versi 1.33 akhirnya coba dengan yang versi 32 bit [1]
+
+Install berhasil tapi muncul error libiconv-2.dll gak ada. cari-cari ketemu libiconv2[2]. Letak file libiconv2 ada pada folder bin dengan nama libiconv2.dll 
+copy file tersebut ke dalam folder yang ada gammu.exe kemudian rename jadi libiconv-2.dll
+
+Akhirnya bisa jalan juga gammu versi 1.33.0
+
+[1] http://sourceforge.net/projects/gammu/files/gammu/1.33.0/Gammu-1.33.0-Windows.exe
+[2] http://sourceforge.net/projects/gnuwin32/files/libiconv/1.9.2-1/libiconv-1.9.2-1-bin.zip/download

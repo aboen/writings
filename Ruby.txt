@@ -1,0 +1,34 @@
+C:\Users\sopyan>gem install mysql
+Fetching: mysql-2.9.1-x86-mingw32.gem (100%)
+
+================================================================================
+
+  You've installed the binary version of mysql.
+  It was built using MySQL Connector/C version 6.0.2.
+  It's recommended to use the exact same version to avoid potential issues.
+
+  At the time of building this gem, the necessary DLL files where available
+  in the following URL:
+
+  http://dev.mysql.com/get/Downloads/Connector-C/mysql-connector-c-noinstall-6.0
+.2-win32.zip/from/pick
+
+  You can put the lib\libmysql.dll available in this package to your Ruby bin di
+rectory.
+  E.g. C:\Ruby\bin
+
+================================================================================
+
+Successfully installed mysql-2.9.1-x86-mingw32
+1 gem installed
+Installing ri documentation for mysql-2.9.1-x86-mingw32...
+Installing RDoc documentation for mysql-2.9.1-x86-mingw32...
+
+=========================================================
+  At the time of building this gem, the necessary DLL files where available
+  in the following URL:
+http://dev.mysql.com/downloads/connector/c/
+
+pilih yang 32 bit kalau pakai ruby yang 32 bit walau anda pakai win 64 bit 
+Pilih yang 64 bit kalau pakai ruby yang 64 bit
+

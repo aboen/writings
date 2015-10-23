@@ -1,0 +1,36 @@
+cpanel DATABASE ERROR: CONNECTION FAILED! Unable to connect to the database! Please contact your server-administrator.
+backup/rename/pindahkan data base roundcube pada /var/lib/mysql/roundcube
+
+kemudian jalan kan perintah :
+matikan mysql server,
+hapus file :
+ibdata1
+ib_logfile0
+ib_logfile1
+
+
+/usr/local/cpanel/bin/update-roundcube --force
+
+root@svr [/var/log]# /usr/local/cpanel/bin/update-roundcube --force
+info [update-roundcube] Roundcube update from 1.0.5.cp1 to 1.0.5.cp1 in progress.
+info [update-roundcube] Roundcube will be locked out during this process.
+info [update-roundcube] Updating Roundcube (using cPanel version)
+info [update-roundcube] Applied patch '0001-Apply-default-values-for-cPanel-webmail-environment.patch'
+patching file config/defaults.inc.php
+info [update-roundcube] Applied patch '0002-inhibit-Roundcube-s-initial-check-for-_token-on-logi.patch'
+patching file index.php
+info [update-roundcube] Applied patch '0003-closed-or-corrupt-connection-to-IMAP-cases-33678-and.patch'
+patching file program/lib/Roundcube/rcube_imap_generic.php
+info [update-roundcube] Applied patch '0004-append-INBOX.-to-avoid-UID-COPY-Unknown-namespace-er.patch'
+patching file config/defaults.inc.php
+info [update-roundcube] Applied patch '0005-Don-t-install-.gitignore-files.patch'
+patching file logs/.gitignore
+patching file temp/.gitignore
+info [update-roundcube] Successfully applied 5 patches
+info [update-roundcube] Applied cPanel patches (if any) to Roundcube source.
+info [update-roundcube] Cleaning old Roundcube data archives
+info [update-roundcube] Successful creation of roundcube cp_schema_version table
+info [update-roundcube] Successfully saved version 1.0.5 to cp_schema_version table
+
+info [update-roundcube] Schema update to 1.0.5 was successful
+info [update-roundcube] Roundcube updated to 1.0.5.cp1

@@ -1,0 +1,447 @@
+SETUP VPN Gateway dengan IPSEC, L2TP
+
+Apa sih VPN ?
+	virtual private network (VPN) adalah perpanjangan private network melalui public network seperti internet.
+	VPN dapat menghubungkan (tunnel) berbagai alat lelalui koneksi yang aman ter-encripsi, sehingga data dari
+	koneksinya tidak dapat dilihat dari luar tunnel.
+
+Untuk apa pakai VPN ?
+	* 	Bila ingin menghubungkan beberapa titik (server), lelalui internet. Misal Perusahaan yang memiliki beberapa
+		kantor cabang di berbagai daerah atau Pegawai yang bekerja dari luar kantor, sehingga komunikasi data lebih 
+		aman karena ter-encripsi.
+	*	Akses dari free internet (WIFI), hotspots, yang diberikan di mall atau restoran/cofe shop, Warnet, yang dapat
+		melakukan sniffing/pencurian password atau data-data pribadi anda (seringkan dengar pembajakan account 
+		facebook atau twitter).
+
+Yang harus disediakan :
+	Vpn mempunyai banyak jenis dan tipenya dulu saya pernah menggunakan Openvpn.
+	Sekarang kita coba dengan IPsec dan L2TP (Layer Two Tunneling Protocol), karena secara default sudah ada software 
+	(client) nya pada berbagai gadged seperti Android maupun Windows
+
+	VPN Server/Gateway
+		openswan
+		xl2tpd
+		ppp
+		system (linux/Unix) networking and firewalling
+	
+Installasi dan Setup
+		Pada saat tutrial ini dbuat saya mengunakan Linux Debian, jadi perintah/sintak/comand dan letak filenya mengikuti struktur debian.
+		Install :
+			apt-get install xl2tpd openswan ppp
+
+	Konfigurasi Openswan :	
+	Edit file /etc/ipsec.conf sehingga menjadi
+		
+		version 2.0     
+		# basic configuration
+		config setup
+        	# NAT-TRAVERSAL support, see README.NAT-Traversal
+        	nat_traversal=yes
+        	# exclude networks used on server side by adding %v4:!a.b.c.0/24
+        	virtual_private=%v4:10.10.0.0/24,%v4:192.168.0.0/16,%v4:172.16.0.0/12
+        	oe=off
+        	protostack=netkey
+
+		conn L2TP-PSK-NAT
+				rightsubnet=vhost:%priv
+				also=L2TP-PSK-noNAT
+
+		conn L2TP-PSK-noNAT
+				authby=secret
+				pfs=no
+				auto=add
+				keyingtries=3
+				rekey=no
+			# Apple iOS doesn't send delete notify so we need dead peer detection
+			# to detect vanishing clients
+				dpddelay=30
+				dpdtimeout=120
+				dpdaction=clear
+			# Set ikelifetime and keylife to same defaults windows has
+				ikelifetime=8h
+				keylife=1h
+				type=transport
+			# Replace IP address with your local IP (private, behind NAT IP is okay as w                          ell)
+				left=10.10.0.1
+			# For updated Windows 2000/XP clients,
+			# to support old clients as well, use leftprotoport=17/%any
+				leftprotoport=17/1701
+				right=%any
+				rightprotoport=17/%any
+			#force all to be nat'ed. because of iOS
+				forceencaps=yes
+
+	Isi file  /etc/ipsec.secrets sehingga menjadi (ganti IP 1.2.3.4 dengan IP publik server, ganti kuncirahasia dengan preshared key sendiri)
+		
+		1.2.3.4 %any:  PSK "kuncirahasia"
+		# this file is managed with debconf and will contain the automatically created RSA keys
+		include /var/lib/openswan/ipsec.secrets.inc
+	
+	Konfigurasi XL2TPD
+			
+		Edit file  /etc/xl2tpd/xl2tpd.conf menjadi 
+
+		[global]                                                                ; Global parameters:
+		ipsec saref = no
+
+		[lns default]                                                   ; Our fallthrough LNS definition
+		ip range = 10.10.0.2-10.10.0.30
+		local ip = 10.10.0.1
+		require chap = yes
+		refuse pap = yes
+		require authentication = yes
+		ppp debug = yes
+		pppoptfile = /etc/ppp/options.xl2tpd.lns
+		length bit = yes
+
+	Konfigurasi PPP
+		Edit File  /etc/ppp/options.xl2tpd.lns sehingga menjadi 
+		
+		refuse-mschap-v2
+		refuse-mschap
+		ms-dns 8.8.8.8
+		ms-dns 8.8.4.4
+		asyncmap 0
+		auth
+		crtscts
+		idle 1800
+		#mtu 1200
+		mtu 1432
+		mru 1200
+		lock
+		hide-password
+		local
+		#debug
+		name l2tpd
+		proxyarp
+		lcp-echo-interval 30
+		lcp-echo-failure 4
+
+	Edit File  /etc/ppp/chap-secrets (isi dengan user-user dan password yang boleh login untuk VPN)
+		
+		# Secrets for authentication using CHAP
+		# client        server  	secret    	IP addresses
+		  client 		* 		rahasia 	*
+
+	Buat file ipsec.vpn untuk inet.d pada /etc/init.d/ipsec.vpn
+
+#!/bin/sh
+# IPsec startup and shutdown script
+#
+### BEGIN INIT INFO
+# Provides:          ipsec
+# Required-Start:    $network $remote_fs $syslog $named
+# Required-Stop:     $syslog $remote_fs
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Start Openswan IPsec at boot time
+# Description:       Enable automatic key management for IPsec (KLIPS and NETKEY)
+### END INIT INFO
+#
+
+case "$1" in
+        start)
+                echo "Starting my Ipsec VPN"
+                iptables -F
+                iptables  -t nat -A POSTROUTING -o venet0:0 -s 10.10.0.0/24 -j MASQUERADE
+                #Uncoment baris berikut kalau menggunakan squid transparent proxy
+                #iptables -t nat -A PREROUTING -i ppp+ -p tcp --dport 80 -j REDIRECT  --to-port 3128
+                echo 1 > /proc/sys/net/ipv4/ip_forward
+                for each in /proc/sys/net/ipv4/conf/*
+                do
+                        echo 0 > $each/accept_redirects
+                        echo 0 > $each/send_redirects
+                done
+                /etc/init.d/ipsec start
+                /etc/init.d/xl2tpd start
+                ;;
+
+        stop)
+                echo "Stopping my Ipsec VPN"
+                iptables --table nat --flush
+                echo 0 > /proc/sys/net/ipv4/ip_forward
+                /etc/init.d/ipsec stop
+                /etc/init.d/xl2tpd stop
+                ;;
+        restart)
+                echo "Restarting my Ipsec VPN"
+                iptables -F
+                iptables -t nat -A POSTROUTING -s 10.10.0.0/24 -o venet0:0 -j MASQUERADE
+                #Uncoment baris berikut kalau menggunakan squid transparent proxy
+                #iptables -t nat -A PREROUTING -i ppp+ -p tcp --dport 80 -j REDIRECT  --to-port 3128
+
+                echo 1 > /proc/sys/net/ipv4/ip_forward
+                for each in /proc/sys/net/ipv4/conf/*
+                do
+                        echo 0 > $each/accept_redirects
+                        echo 0 > $each/send_redirects
+                done
+                /etc/init.d/ipsec restart
+                /etc/init.d/xl2tpd restart
+
+                ;;
+        *)
+                echo "Usage: /etc/init.d/ipsec.vpn  {start|stop|restart}"
+                exit 1
+                ;;
+esac
+
+
+root@svr3:~# chmod +x /etc/init.d/ipsec.vpn
+
+	
+Matikan script ipsec default dengan perintah :
+		update-rc.d -f ipsec remove
+
+
+		
+	Kemudian aktifkan script ipsec.vpn dengan perintah :
+		update-rc.d ipsec.vpn defaults
+		
+
+Cara pakainya ?
+	Server :
+		Jalankan VPN 
+		/etc/init.d/ipsec.vpn start
+		
+		Cek dengan ipsec verify
+		root@vnb:/etc# ipsec verify
+		Checking your system to see if IPsec got installed and started correctly:
+		Version check and ipsec on-path                                 [OK]
+		Linux Openswan U2.6.28/K2.6.32-5-686-bigmem (netkey)
+		Checking for IPsec support in kernel                            [OK]
+		NETKEY detected, testing for disabled ICMP send_redirects       [OK]
+		NETKEY detected, testing for disabled ICMP accept_redirects     [OK]
+		Checking that pluto is running                                  [OK]
+		Pluto listening for IKE on udp 500                              [OK]
+		Pluto listening for NAT-T on udp 4500                           [OK]
+		Two or more interfaces found, checking IP forwarding            [OK]
+		Checking NAT and MASQUERADEing
+		Checking for 'ip' command                                       [OK]
+		Checking for 'iptables' command                                 [OK]
+		Opportunistic Encryption Support                                [DISABLED]
+
+	Client Windows 7 :
+	 ke Control Panel > Network and Sharing Center > Set up a new connection or network
+	 Pilih  Connect to a workplace kemudian Next
+	 Pilih No,create a new connection  kemudian Next
+	 Pilih Use my Internet connection (VPN)
+	 Isi kotak Internet Address dengan IP/Domain VPN server 
+	 Isi Destination Name terserah saja kemudian pilih Next
+	 tandai (cek) Don't connect now; just set it up so I can connect later
+	 Isi Username dan Password  sama seperti yang sudah di isi pada file /etc/ppp/chap-secrets (client = Username , Secret = Password)
+	 klik create, kemudian pilih close
+	 ke Control Panel > Network and Sharing Center > Change adapter settings
+	 klik kanan pada conection yang dibuat tadi kemudian pilih Properties
+	 Pilih tab Security , 
+	 Ubah Type of VPN :  Layer 2Tunneling Protocol with IPsec (L2TP/IPsec)
+	 pada Data encryption : Optional encryption (connect event if no encryption )
+	 
+	 Setelah konek ke internet klik pada icon koneksi di pojok kanan bawah klik VPN(namakoneksi) klik Connect
+	 
+	Android OS :
+	 Settings > Wireless and networks > VPN Settings
+	 Pilih Add VPN > Add L2TP VPN
+	 VPN name : Isi sesuai selera nama koneksi VPN nya.
+	 Set VPN Server : isi dengan IP/Domain VPN server
+	 Enable L2TP secret  (aktifkan/cek)
+	 Set L2TP secret : isi dengan file yang sama dengan file /etc/ipsec.secrets 
+	 DNS search domains : kosongkan saja, kalau tidak bisa konek ke internet silakan isi dengan dns google atau opendns
+	 
+	 Setelah kembali ke menu  Settings > Wireless and networks > VPN Settings
+	 akan ada koneksi VPN yang dibuat, Jalakan, akan di tanya  username dan password, isi sesuai yang sudah dibuat pada
+	 pada file /etc/ppp/chap-secrets (client = Username , Secret = Password)
+	 
+Bahan Bacaan :
+http://en.wikipedia.org/wiki/Virtual_private_network
+http://bailey.st/blog/2011/07/06/secure-ipsecl2tp-vpn-for-on-the-road-android-devices/
+https://github.com/xelerance/Openswan/wiki/L2tp-ipsec-configuration-using-openswan-and-xl2tpd
+
+root@svr3:~# ipsec verify
+Checking your system to see if IPsec got installed and started correctly:
+Version check and ipsec on-path                                 [OK]
+Linux Openswan U2.6.37/K(no kernel code presently loaded)
+Checking for IPsec support in kernel                            [FAILED]
+ SAref kernel support                                           [N/A]
+Checking that pluto is running                                  [OK]
+ Pluto listening for IKE on udp 500                             [FAILED]
+ Pluto listening for NAT-T on udp 4500                          [FAILED]
+Two or more interfaces found, checking IP forwarding            [FAILED]
+Checking NAT and MASQUERADEing                                  [OK]
+Checking for 'ip' command                                       [OK]
+Checking /bin/sh is not /bin/dash                               [WARNING]
+Checking for 'iptables' command                                 [OK]
+Opportunistic Encryption Support                                [DISABLED]
+
+
+dpkg: warning: files list file for package 'liblzma5:amd64' missing; assuming package has no files currently installed
+dpkg: warning: files list file for package 'libavahi-common-data:amd64' missing; assuming package has no files currently installed
+(Reading database ... 22456 files and directories currently installed.)
+
+liblzma5:amd64
+libavahi-common-data:amd64
+
+
+root@svr3:/var/log# ipsec auto --status
+000 using kernel interface: netkey
+000 interface lo/lo ::1
+000 interface venet0/venet0 2602:ffe8:102:406::f5f4:1b3b
+000 interface venet0/venet0 2602:ffe8:102:406::e17b:8387
+000 interface venet0/venet0 2602:ffe8:102:406::1ae2:d624
+000 interface venet0/venet0 2602:ffe8:102:406::730f:2705
+000 interface venet0/venet0 2602:ffe8:102:406::5259:287b
+000 interface lo/lo 127.0.0.1
+000 interface lo/lo 127.0.0.1
+000 interface venet0/venet0 127.0.0.2
+000 interface venet0/venet0 127.0.0.2
+000 interface venet0:0/venet0:0 107.182.131.246
+000 interface venet0:0/venet0:0 107.182.131.246
+000 %myid = (none)
+000 debug none
+000
+000 virtual_private (%priv):
+000 - allowed 6 subnets: 10.10.0.0/24, 192.168.0.0/16, 172.16.0.0/12, 25.0.0.0/8, fd00::/8, fe80::/10
+000 - disallowed 0 subnets:
+000 WARNING: Disallowed subnets in virtual_private= is empty. If you have
+000          private address space in internal use, it should be excluded!
+000
+000 algorithm ESP encrypt: id=2, name=ESP_DES, ivlen=8, keysizemin=64, keysizemax=64
+000 algorithm ESP encrypt: id=3, name=ESP_3DES, ivlen=8, keysizemin=192, keysizemax=192
+000 algorithm ESP encrypt: id=6, name=ESP_CAST, ivlen=8, keysizemin=40, keysizemax=128
+000 algorithm ESP encrypt: id=7, name=ESP_BLOWFISH, ivlen=8, keysizemin=40, keysizemax=448
+000 algorithm ESP encrypt: id=11, name=ESP_NULL, ivlen=0, keysizemin=0, keysizemax=0
+000 algorithm ESP encrypt: id=12, name=ESP_AES, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=13, name=ESP_AES_CTR, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=14, name=ESP_AES_CCM_A, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=15, name=ESP_AES_CCM_B, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=16, name=ESP_AES_CCM_C, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=18, name=ESP_AES_GCM_A, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=19, name=ESP_AES_GCM_B, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=20, name=ESP_AES_GCM_C, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=22, name=ESP_CAMELLIA, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=252, name=ESP_SERPENT, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=253, name=ESP_TWOFISH, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm ESP auth attr: id=1, name=AUTH_ALGORITHM_HMAC_MD5, keysizemin=128, keysizemax=128
+000 algorithm ESP auth attr: id=2, name=AUTH_ALGORITHM_HMAC_SHA1, keysizemin=160, keysizemax=160
+000 algorithm ESP auth attr: id=5, name=AUTH_ALGORITHM_HMAC_SHA2_256, keysizemin=256, keysizemax=256
+000 algorithm ESP auth attr: id=6, name=AUTH_ALGORITHM_HMAC_SHA2_384, keysizemin=384, keysizemax=384
+000 algorithm ESP auth attr: id=7, name=AUTH_ALGORITHM_HMAC_SHA2_512, keysizemin=512, keysizemax=512
+000 algorithm ESP auth attr: id=8, name=AUTH_ALGORITHM_HMAC_RIPEMD, keysizemin=160, keysizemax=160
+000 algorithm ESP auth attr: id=9, name=AUTH_ALGORITHM_AES_CBC, keysizemin=128, keysizemax=128
+000 algorithm ESP auth attr: id=251, name=(null), keysizemin=0, keysizemax=0
+000
+000 algorithm IKE encrypt: id=0, name=(null), blocksize=16, keydeflen=131
+000 algorithm IKE encrypt: id=5, name=OAKLEY_3DES_CBC, blocksize=8, keydeflen=192
+000 algorithm IKE encrypt: id=7, name=OAKLEY_AES_CBC, blocksize=16, keydeflen=128
+000 algorithm IKE hash: id=1, name=OAKLEY_MD5, hashsize=16
+000 algorithm IKE hash: id=2, name=OAKLEY_SHA1, hashsize=20
+000 algorithm IKE dh group: id=2, name=OAKLEY_GROUP_MODP1024, bits=1024
+000 algorithm IKE dh group: id=5, name=OAKLEY_GROUP_MODP1536, bits=1536
+000 algorithm IKE dh group: id=14, name=OAKLEY_GROUP_MODP2048, bits=2048
+000 algorithm IKE dh group: id=15, name=OAKLEY_GROUP_MODP3072, bits=3072
+000 algorithm IKE dh group: id=16, name=OAKLEY_GROUP_MODP4096, bits=4096
+000 algorithm IKE dh group: id=17, name=OAKLEY_GROUP_MODP6144, bits=6144
+000 algorithm IKE dh group: id=18, name=OAKLEY_GROUP_MODP8192, bits=8192
+000 algorithm IKE dh group: id=22, name=OAKLEY_GROUP_DH22, bits=1024
+000 algorithm IKE dh group: id=23, name=OAKLEY_GROUP_DH23, bits=2048
+000 algorithm IKE dh group: id=24, name=OAKLEY_GROUP_DH24, bits=2048
+000
+000 stats db_ops: {curr_cnt, total_cnt, maxsz} :context={0,0,0} trans={0,0,0} attrs={0,0,0}
+000
+000 "L2TP-PSK-NAT": 10.10.0.1<10.10.0.1>[+S=C]:17/1701...%virtual[+S=C]:17/%any===?; unrouted; eroute owner: #0
+000 "L2TP-PSK-NAT":     myip=unset; hisip=unset;
+000 "L2TP-PSK-NAT":   ike_life: 28800s; ipsec_life: 3600s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 3
+000 "L2TP-PSK-NAT":   policy: PSK+ENCRYPT+DONTREKEY+IKEv2ALLOW+SAREFTRACK+lKOD+rKOD; prio: 32,32; interface: ;
+000 "L2TP-PSK-NAT":   dpd: action:clear; delay:30; timeout:120;
+000 "L2TP-PSK-NAT":   newest ISAKMP SA: #0; newest IPsec SA: #0;
+000 "L2TP-PSK-noNAT": 10.10.0.1<10.10.0.1>[+S=C]:17/1701...%any[+S=C]:17/%any; unrouted; eroute owner: #0
+000 "L2TP-PSK-noNAT":     myip=unset; hisip=unset;
+000 "L2TP-PSK-noNAT":   ike_life: 28800s; ipsec_life: 3600s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 3
+000 "L2TP-PSK-noNAT":   policy: PSK+ENCRYPT+DONTREKEY+IKEv2ALLOW+SAREFTRACK+lKOD+rKOD; prio: 32,32; interface: ;
+000 "L2TP-PSK-noNAT":   dpd: action:clear; delay:30; timeout:120;
+000 "L2TP-PSK-noNAT":   newest ISAKMP SA: #0; newest IPsec SA: #0;
+000
+000
+
+
+Starting Pluto (Openswan Version 2.6.37; Vendor ID OEu\134d\134jy\134\134ap) pid:2873
+LEAK_DETECTIVE support [disabled]
+OCF support for IKE [disabled]
+SAref support [disabled]: Protocol not available
+SAbind support [disabled]: Protocol not available
+NSS support [disabled]
+HAVE_STATSD notification support not compiled in
+Setting NAT-Traversal port-4500 floating to on
+   port floating activation criteria nat_t=1/port_float=1
+   NAT-Traversal support  [enabled]
+using /dev/urandom as source of random entropy
+ike_alg_register_enc(): Activating OAKLEY_AES_CBC: Ok (ret=0)
+starting up 1 cryptographic helpers
+started helper pid=2878 (fd:5)
+Using Linux 2.6 IPsec interface code on 2.6.32-042stab084.26 (experimental code)
+ike_alg_register_enc(): Activating aes_ccm_8: Ok (ret=0)
+ike_alg_add(): ERROR: Algorithm already exists
+ike_alg_register_enc(): Activating aes_ccm_12: FAILED (ret=-17)
+ike_alg_add(): ERROR: Algorithm already exists
+ike_alg_register_enc(): Activating aes_ccm_16: FAILED (ret=-17)
+ike_alg_add(): ERROR: Algorithm already exists
+ike_alg_register_enc(): Activating aes_gcm_8: FAILED (ret=-17)
+ike_alg_add(): ERROR: Algorithm already exists
+ike_alg_register_enc(): Activating aes_gcm_12: FAILED (ret=-17)
+ike_alg_add(): ERROR: Algorithm already exists
+ike_alg_register_enc(): Activating aes_gcm_16: FAILED (ret=-17)
+Changed path to directory '/etc/ipsec.d/cacerts'
+Changed path to directory '/etc/ipsec.d/aacerts'
+Changed path to directory '/etc/ipsec.d/ocspcerts'
+Changing to directory '/etc/ipsec.d/crls'
+  Warning: empty directory
+added connection description "L2TP-PSK-NAT"
+added connection description "L2TP-PSK-noNAT"
+using /dev/urandom as source of random entropy
+listening for IKE messages
+adding interface venet0:0/venet0:0 107.182.131.246:500
+adding interface venet0:0/venet0:0 107.182.131.246:4500
+adding interface venet0/venet0 127.0.0.2:500
+adding interface venet0/venet0 127.0.0.2:4500
+adding interface lo/lo 127.0.0.1:500
+adding interface lo/lo 127.0.0.1:4500
+adding interface venet0/venet0 2602:ffe8:102:406::5259:287b:500
+adding interface venet0/venet0 2602:ffe8:102:406::730f:2705:500
+adding interface venet0/venet0 2602:ffe8:102:406::1ae2:d624:500
+adding interface venet0/venet0 2602:ffe8:102:406::e17b:8387:500
+adding interface venet0/venet0 2602:ffe8:102:406::f5f4:1b3b:500
+adding interface lo/lo ::1:500
+loading secrets from "/etc/ipsec.secrets"
+loading secrets from "/var/lib/openswan/ipsec.secrets.inc"
+packet from 36.69.86.26:500: ignoring Vendor ID payload [MS NT5 ISAKMPOAKLEY 00000008]
+packet from 36.69.86.26:500: received Vendor ID payload [RFC 3947] method set to=109
+packet from 36.69.86.26:500: received Vendor ID payload [draft-ietf-ipsec-nat-t-ike-02_n] meth=106, but already using method 10                       9
+packet from 36.69.86.26:500: ignoring Vendor ID payload [FRAGMENTATION]
+packet from 36.69.86.26:500: ignoring Vendor ID payload [MS-Negotiation Discovery Capable]
+packet from 36.69.86.26:500: ignoring Vendor ID payload [Vid-Initial-Contact]
+packet from 36.69.86.26:500: ignoring Vendor ID payload [IKE CGA version 1]
+packet from 36.69.86.26:500: initial Main Mode message received on 107.182.131.246:500 but no connection has been authorized wi                       th policy=PSK
+packet from 36.69.86.26:500: ignoring Vendor ID payload [MS NT5 ISAKMPOAKLEY 00000008]
+packet from 36.69.86.26:500: received Vendor ID payload [RFC 3947] method set to=109
+packet from 36.69.86.26:500: received Vendor ID payload [draft-ietf-ipsec-nat-t-ike-02_n] meth=106, but already using method 10                       9
+packet from 36.69.86.26:500: ignoring Vendor ID payload [FRAGMENTATION]
+packet from 36.69.86.26:500: ignoring Vendor ID payload [MS-Negotiation Discovery Capable]
+packet from 36.69.86.26:500: ignoring Vendor ID payload [Vid-Initial-Contact]
+packet from 36.69.86.26:500: ignoring Vendor ID payload [IKE CGA version 1]
+packet from 36.69.86.26:500: initial Main Mode message received on 107.182.131.246:500 but no connection has been authorized wi                       th policy=PSK
+packet from 36.69.86.26:500: ignoring Vendor ID payload [MS NT5 ISAKMPOAKLEY 00000008]
+packet from 36.69.86.26:500: received Vendor ID payload [RFC 3947] method set to=109
+packet from 36.69.86.26:500: received Vendor ID payload [draft-ietf-ipsec-nat-t-ike-02_n] meth=106, but already using method 10                       9
+packet from 36.69.86.26:500: ignoring Vendor ID payload [FRAGMENTATION]
+packet from 36.69.86.26:500: ignoring Vendor ID payload [MS-Negotiation Discovery Capable]
+packet from 36.69.86.26:500: ignoring Vendor ID payload [Vid-Initial-Contact]
+packet from 36.69.86.26:500: ignoring Vendor ID payload [IKE CGA version 1]
+packet from 36.69.86.26:500: initial Main Mode message received on 107.182.131.246:500 but no connection has been authorized wi                       th policy=PSK
+packet from 36.69.86.26:500: ignoring Vendor ID payload [MS NT5 ISAKMPOAKLEY 00000008]
+packet from 36.69.86.26:500: received Vendor ID payload [RFC 3947] method set to=109
+packet from 36.69.86.26:500: received Vendor ID payload [draft-ietf-ipsec-nat-t-ike-02_n] meth=106, but already using method 10                       9
+packet from 36.69.86.26:500: ignoring Vendor ID payload [FRAGMENTATION]
+packet from 36.69.86.26:500: ignoring Vendor ID payload [MS-Negotiation Discovery Capable]
+packet from 36.69.86.26:500: ignoring Vendor ID payload [Vid-Initial-Contact]
+packet from 36.69.86.26:500: ignoring Vendor ID payload [IKE CGA version 1]
+packet from 36.69.86.26:500: initial Main Mode message received on 107.182.131.246:500 but no connection has been authorized wi                       th policy=PSK

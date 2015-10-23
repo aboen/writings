@@ -1,0 +1,132 @@
+Postfix + DKIM +SPF
+
+root@svr2:~# apt-get install postfix
+
+UNTUK DKIM
+root@svr2:~# apt-get  install opendkim opendkim-tools
+
+
+root@svr2:/etc/postfix# mkdir -pv /etc/opendkim/qurandaily.org
+mkdir: created directory `/etc/opendkim'
+mkdir: created directory `/etc/opendkim/qurandaily.org'
+root@svr2:/etc/postfix# chown -Rv opendkim:opendkim /etc/opendkim
+changed ownership of `/etc/opendkim/qurandaily.org' from root:root to opendkim:opendkim
+changed ownership of `/etc/opendkim' from root:root to opendkim:opendkim
+root@svr2:/etc/postfix#
+
+root@svr2:/etc/postfix# chmod go-rwx /etc/opendkim/*
+root@svr2:/etc/opendkim/qurandaily.org# opendkim-genkey -r -h rsa-sha256 -d qurandaily.org -s mail
+
+root@svr2:/etc/opendkim/qurandaily.org# ls
+mail.private  mail.txt
+root@svr2:/etc/opendkim/qurandaily.org# chown opendkim:opendkim *
+root@svr2:/etc/opendkim/qurandaily.org# chmod u=rw,go-rwx *
+
+buat/edit file  key table. 
+root@svr2:/etc/opendkim# vi /etc/opendkim/KeyTable
+isinya :
+qurandaily.org qurandaily.org:mail:/etc/opendkim/qurandaily.org/mail.private
+#mail._domainkey.qurandaily.org qurandaily.org:mail:/etc/opendkim/qurandaily.org/mail.private
+
+buat file Signing Table.
+/etc/opendkim/SigningTable
+root@svr2:/etc/opendkim# vi /etc/opendkim/SigningTable
+isinya :
+*@qurandaily.org qurandaily.org
+
+buat file /etc/opendkim/TrustedHosts
+root@svr2:/etc/opendkim# vi /etc/opendkim/TrustedHosts
+isinya :
+127.0.0.1
+localhost
+qurandaily.org
+svr2.1bigtree.com
+
+root@svr2:/etc/opendkim# chown opendkim:opendkim /etc/opendkim/KeyTable
+root@svr2:/etc/opendkim# chown opendkim:opendkim /etc/opendkim/SigningTable
+root@svr2:/etc/opendkim# chown opendkim:opendkim /etc/opendkim/TrustedHosts
+
+edit konfigurasi /etc/opendkim.conf
+root@svr2:/etc/opendkim# cp /etc/opendkim.conf /etc/opendkim.conf_orig
+root@svr2:/etc/opendkim# vi  /etc/opendkim.conf
+isinya :
+# This is a basic configuration that can easily be adapted to suit a standard
+# installation. For more advanced options, see opendkim.conf(5) and/or
+# /usr/share/doc/opendkim/examples/opendkim.conf.sample.
+
+# Log to syslog
+Syslog                  yes
+SyslogSuccess yes
+LogWhy yes
+# Required to use local socket with MTAs that access the socket as a non-
+# privileged user (e.g. Postfix)
+UMask                   002
+
+# Sign for example.com with key in /etc/mail/dkim.key using
+# selector '2007' (e.g. 2007._domainkey.example.com)
+#Domain                 example.com
+#KeyFile                /etc/mail/dkim.key
+#Selector               2007
+
+# Commonly-used options; the commented-out versions show the defaults.
+#Canonicalization       simple
+#Mode                   sv
+#SubDomains             no
+#ADSPDiscard            no
+
+Canonicalization        relaxed/simple
+Selector                mail
+
+# Always oversign From (sign using actual From and a null From to prevent
+# malicious signatures header fields (From and/or others) between the signer
+# and the verifier.  From is oversigned by default in the Debian pacakge
+# because it is often the identity key used by reputation systems and thus
+# somewhat security sensitive.
+OversignHeaders         From
+
+# Our KeyTable and SigningTable
+KeyTable refile:/etc/opendkim/KeyTable
+SigningTable refile:/etc/opendkim/SigningTable
+
+# Trusted Hosts
+ExternalIgnoreList /etc/opendkim/TrustedHosts
+InternalHosts /etc/opendkim/TrustedHosts
+
+# Hashing Algorithm
+SignatureAlgorithm rsa-sha256
+
+# Auto restart when the failure occurs. CAUTION: This may cause a tight fork loops
+AutoRestart Yes
+
+# Set the user and group to opendkim user
+UserID opendkim:opendkim
+
+# Specify the working socket
+Socket inet:8891@localhost
+
+# List domains to use for RFC 6541 DKIM Authorized Third-Party Signatures
+# (ATPS) (experimental)
+
+#ATPSDomains            example.com
+
+UNTUK SPF
+root@svr2:~# apt-get install postfix-policyd-spf-perl libmail-spf-perl
+root@svr2:/etc/opendkim# vi /etc/postfix/main.cf
+tambahkan :
+policy-spf_time_limit = 3600s
+#spf-policyd_time_limit = 3600s (old version)
+smtpd_recipient_restrictions =
+        permit_sasl_authenticated,
+        permit_mynetworks,
+        reject_unauth_destination,
+        check_policy_service unix:private/policy-spf,
+        reject_rbl_client list.dsbl.org,
+        reject_rbl_client sbl.spamhaus.org,
+        reject_rbl_client cbl.abuseat.org,
+        reject_rbl_client dul.dnsbl.sorbs.net,
+        permit
+
+root@svr2:~# vi /etc/postfix/master.cf
+#spf
+policy-spf unix - n n - - spawn
+user=nobody argv=/usr/sbin/postfix-policyd-spf-perl

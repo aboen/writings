@@ -1,0 +1,78 @@
+L2TP over IPSec VPN on Debian 
+
+root@svr1:~# apt-get install racoon xl2tpd iptables
+Reading package lists... Done
+Building dependency tree
+Reading state information... Done
+iptables is already the newest version.
+The following NEW packages will be installed:
+  ipsec-tools racoon xl2tpd
+0 upgraded, 3 newly installed, 0 to remove and 0 not upgraded.
+Need to get 462 kB/534 kB of archives.
+After this operation, 1,641 kB of additional disk space will be used.
+Get:1 http://ftp.debian.org/debian/ jessie/main ipsec-tools amd64 1:0.8.2+20140711-2+deb8u1 [92.3 kB]
+Get:2 http://ftp.debian.org/debian/ jessie/main racoon amd64 1:0.8.2+20140711-2+deb8u1 [369 kB]
+Fetched 462 kB in 1s (233 kB/s)
+debconf: delaying package configuration, since apt-utils is not installed
+Selecting previously unselected package xl2tpd.
+(Reading database ... 21613 files and directories currently installed.)
+Preparing to unpack .../xl2tpd_1.3.6+dfsg-2_amd64.deb ...
+Unpacking xl2tpd (1.3.6+dfsg-2) ...
+Selecting previously unselected package ipsec-tools.
+Preparing to unpack .../ipsec-tools_1%3a0.8.2+20140711-2+deb8u1_amd64.deb ...
+Unpacking ipsec-tools (1:0.8.2+20140711-2+deb8u1) ...
+Selecting previously unselected package racoon.
+Preparing to unpack .../racoon_1%3a0.8.2+20140711-2+deb8u1_amd64.deb ...
+Unpacking racoon (1:0.8.2+20140711-2+deb8u1) ...
+Processing triggers for systemd (215-17+deb8u1) ...
+Processing triggers for man-db (2.7.0.2-5) ...
+Setting up xl2tpd (1.3.6+dfsg-2) ...
+Setting up ipsec-tools (1:0.8.2+20140711-2+deb8u1) ...
+update-rc.d: warning: start and stop actions are no longer supported; falling back to defaults
+Setting up racoon (1:0.8.2+20140711-2+deb8u1) ...
+
+
++-------------------------------------------------Configuring racoon----------------------------------------------------+
+¦ Racoon can be configured either directly, by editing /etc/racoon/racoon.conf, or using the racoon-tool                ¦
+¦ administrative front end.                                                                                             ¦
+¦                                                                                                                       ¦
+¦ Use of the "direct" method is strongly recommended if you want to use all the racoon examples on the Net, and if      ¦
+¦ you want to use the full racoon feature set. You will have to directly edit /etc/racoon/racoon.conf and possibly      ¦
+¦ manually set up the Security Policy Database via setkey.                                                              ¦
+¦                                                                                                                       ¦
+¦ Racoon-tool has been updated for racoon 0.8.0, and is for use in basic configuration setups. It gives the benefit     ¦
+¦ of managing the SPD along with the IKE that strongSwan offers. IPv6, transport/tunnel mode (ESP/AH), PSK/X509         ¦
+¦ auth, and basic "anonymous" VPN server are supported.                                                                 ¦
+¦                                                                                                                       ¦
+¦ More information is available in /usr/share/doc/racoon/README.Debian.                                                 ¦
+¦                                                                                                                       ¦
+¦ Configuration mode for racoon IKE daemon:                                                                             ¦
+¦ +-------------------------------------------------------------------------------------------------------------------+ ¦
+¦ ¦                                                   direct                                                          ¦ ¦
+¦ ¦                                                   racoon-tool                                                     ¦ ¦
+¦ +-------------------------------------------------------------------------------------------------------------------+ ¦
++-----------------------------------------------------------------------------------------------------------------------¦
+¦                                                       <  OK  >     
+
+
+root@svr1:~# cd /etc/racoon
+root@svr1:/etc/racoon# ls
+certs  psk.txt  racoon.conf  racoon-tool.conf  racoon-tool.conf.d  scripts
+root@svr1:/etc/racoon# vi racoon.conf
+root@svr1:/etc/racoon# vi /etc/xl2tpd/xl2tpd.conf
+root@svr1:/etc/racoon# vi /etc/ppp/xl2tpd-options
+root@svr1:/etc/racoon# vi /etc/ppp/chap-secrets
+root@svr1:/etc/racoon# vi  /proc/sys/net/ipv4/ip_forward
+root@svr1:/etc/racoon# vi /etc/sysctl.conf
+root@svr1:/etc/racoon# /etc/init.d/procps start
+[ ok ] Starting procps (via systemctl): procps.service.
+root@svr1:/etc/racoon#
+
+root@svr1:/etc/racoon# iptables -t nat -A POSTROUTING -o eth0 -s 192.168.200.0/24 -j MASQUERADE
+root@svr1:/etc/racoon# iptables -t nat -A POSTROUTING -s 192.168.200.0/24 -j SNAT --to-source 167.114.155.117
+root@svr1:/etc/racoon# iptables -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
+root@svr1:/etc/racoon# iptables -A INPUT -p udp --dport 500 -j ACCEPT
+root@svr1:/etc/racoon# iptables -A INPUT -p udp --dport 4500 -j ACCEPT
+root@svr1:/etc/racoon# iptables -A INPUT -p esp -j ACCEPT
+root@svr1:/etc/racoon# iptables -A INPUT -p udp -m policy --dir in --pol ipsec -m udp --dport 1701 -j ACCEPT
+
