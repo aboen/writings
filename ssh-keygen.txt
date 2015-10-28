@@ -1,0 +1,176 @@
+root@leaf [~]# ssh-keygent -t dsa
+-bash: ssh-keygent: command not found
+root@leaf [~]# ssh-keygen -t dsa
+Generating public/private dsa key pair.
+Enter file in which to save the key (/root/.ssh/id_dsa):
+Enter passphrase (empty for no passphrase):
+Enter same passphrase again:
+Your identification has been saved in /root/.ssh/id_dsa.
+Your public key has been saved in /root/.ssh/id_dsa.pub.
+The key fingerprint is:
+49:44:35:bc:dc:b8:54:9c:2f:8d:a4:c6:77:33:5f:14 root@123.123.123.123
+root@leaf [~]#
+
+root@leaf [~]# scp ~/.ssh/id_dsa.pub root@123.123.123.123:~/.ssh/
+
+
+RNDC Conf Setup 
+jalan kan rndc-confgen
+
+# rndc-confgen
+hasilnya seperti ini :
+# Start of rndc.conf
+key "rndckey" {
+        algorithm hmac-md5;
+        secret "S79xvthkd0kfyGTYe8/tRX==";
+};
+
+options {
+        default-key "rndckey";
+        default-server 127.0.0.1;
+        default-port 953;
+};
+# End of rndc.conf
+
+# Use with the following in named.conf, adjusting the allow list as needed:
+# key "rndckey" {
+#       algorithm hmac-md5;
+#       secret "S79xvthkd0kfyGTYe8/tRX==";
+# };
+#
+# controls {
+#       inet 127.0.0.1 port 953
+#               allow { 127.0.0.1; } keys { "rndckey"; };
+# };
+# End of named.conf
+
+Bagin pertama  masukan dalam /etc/rndc.conf seprti berikut :
+
+# Start of rndc.conf
+key "rndckey" {
+        algorithm hmac-md5;
+        secret "S79xvthkd0kfyGTYe8/tRX==";
+};
+
+options {
+        default-key "rndckey";
+        default-server 127.0.0.1;
+        default-port 953;
+};
+# End of rndc.conf
+Bagian kedua  masukan ke dalam rndc.key kemudian di include dalam file named.conf  atau langsung di masukan dalam file named.conf dengan menghilangkan #
+
+Bila di include :
+edit file /etc/rndc.key isi dengan berikut :
+#
+ key "rndckey" {
+       algorithm hmac-md5;
+       secret "S79xvthkd0kfyGTYe8/tRX==";
+ };
+
+ controls {
+       inet 127.0.0.1 port 953
+               allow { 127.0.0.1; } keys { "rndckey"; };
+ };
+# End of named.conf
+
+kemudian dalam file /etc/named.conf tambahkan baris berikut :
+include "/etc/rndc.key";
+
+Bila di masukan langsung dalam file /etc/named.conf masukan baris berikut dalam file named.conf
+#
+ key "rndckey" {
+       algorithm hmac-md5;
+       secret "S79xvthkd0kfyGTYe8/tRX==";
+ };
+
+ controls {
+       inet 127.0.0.1 port 953
+               allow { 127.0.0.1; } keys { "rndckey"; };
+ };
+# End of named.conf
+
+Rekomendasi untuk mengunakan include untuk alasan ke amanan
+
+
+script named
+=============================
+
+#! /bin/bash
+mkdir /etc/named_backup
+cp /etc/named.conf /etc/named_backup
+cd /etc/named_backup
+
+#store number of lines in conf file
+lines=`cat named.conf | wc -l`
+
+#find fist line number for external zone
+fistline=`grep -n "// BEGIN external zone entries" named.conf  | cut -f1 -d:`
+
+# bc calculates how many lines to tail - header
+modifylines=`echo "$lines-$fistline" | bc`
+
+
+# just modify the zone file lines, the first 27 lines do not need to be changed
+tail -$modifylines named.conf > named.conf.tail
+
+sed -e "s/type master/type slave/g" named.conf.tail > named.conf.slave
+sed -e "s/file \"pri\/rev\//file \"sec\/rev\//g" named.conf.slave > named.conf.rev
+sed -e "s/file \"pri\/fwd\//file \"sec\/fwd\//g" named.conf.rev > named.conf.fwd
+
+awk '{print $0} /\";/ {found=1} /\";/ && found {print "\tmasters { 64.87.57.48; };"}' named.conf.fwd > named.conf.tailnew
+
+ln2=`cat named.conf.tailnew | wc -l`
+
+#merge head & tail named
+cd /etc/named_backup/slave
+cat named.conf-slave.head named.conf.tailnew > /etc/named_backup/slave/named.conf
+
+#delete file not used
+rm -rf  named.conf.tail  named.conf.fwd named.conf.slave named.conf.tailnew named.conf.rev
+
+#copy file named.conf to slave server 
+#if ssh non standart port
+#scp -P 2250 /etc/named_backup/slave/named.conf root@123.123.123.123:/etc/
+# ssh standart port
+scp  /etc/named_backup/slave/named.conf root@123.123.123.123:/etc/
+
+#restart bind at slave server
+ssh root@123.123.123.123 /etc/init.d/named restart
+
+
+-------------
+File named.conf-slave.head
+#start named
+options
+{
+
+        // Put files that named is allowed to write in the data/ directory:
+        directory "/var/named"; // the default
+        dump-file               "data/cache_dump.db";
+        statistics-file         "data/named_stats.txt";
+        memstatistics-file      "data/named_mem_stats.txt";
+        allow-notify {91.216.93.59;};
+
+};
+logging
+{
+        channel default_debug {
+                file "data/named.run";
+                severity dynamic;
+        };
+};
+
+include "/etc/rndc.key";
+
+
+view    "external"
+{
+        match-clients           { any; };
+        match-destinations      { any; };
+
+        recursion no;
+        allow-query-cache { none; };
+#       include "/etc/named.root.hints";
+#end Head named
+

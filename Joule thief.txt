@@ -1,0 +1,33 @@
+Apaan sih Joule thief ?
+Joule thief adalah sebuah istilah dari rangkaian elektronika  yang "merampok" setiap mili volt tegangan dari sebuah batre, walaupun dengan batre bekas yang sudah tidak jalan (misal bekas jam dinding atau remote tv ).
+
+Prakteknya seperti ini.
+Dengan sebuah batre AAA atau AA dapat di hasilkan tegangan 1.5V idealnya tapi dengan hanya 1 buat batre tersebut tidak akan mampu menyalakan sebuat lampu LED (biasanya 3V). Tapi dengan mengunakan tehnik Joule Thief mampu menyalakan LED tersebut walaupun dengan sisa tegangan di batre hanya 0.3V. 
+
+Kompenen yang di gunakan : Resitor 1K, LED, Transistro 2N 3904 NPN, Ferrite Toroid yang berbentuk cincin, Kabel secukupnya.
+
+Yang agak ribet mungkin membuat induktor (lilitan) pada cincin Toroid tersebut. Toroid yang di gunakan berdiameter kurang lebih 1,5 cm yang banyaknya lilitan pada cincin toroid tersebut antara 7-10 lilitan. Sepertinya lebih mudah mencari cincin toroid tersebut pada komponen elektronikan bekas seprti ( radio/tape, atau bekas power suply) Saya parnah tanya-tanya di glodok tapi ukurannya yang ada lebih besar/panjang. 
+
+Skema rangkaiannya adalah seperti berikut :
+
+<img src="http://www.flickr.com/photos/bre/1828270262/in/pool-69453349@N00">
+
+Proses pembutan lilitan toroid nya seperti berikut :
+Menggunkan 2 buah kabel dan di lilit sejajar kemudian ujung yang satu di gabung dan di sambung ke positif batere dan 2 ujung yang lain di sambung ke resistor dan  satunya ke transistor dan led.
+
+<img src="http://www.flickr.com/photos/oskay/1830118932/">
+
+<img src="http://www.flickr.com/photos/oskay/1830119282/">
+
+<img src="http://www.flickr.com/photos/oskay/1830119638/">
+
+<img src="http://www.flickr.com/photos/oskay/1830119928/">
+
+<img src="http://www.flickr.com/photos/oskay/1830120256/">
+
+<img src="http://www.flickr.com/photos/oskay/1829283851/">
+
+<img src="http://www.flickr.com/photos/oskay/1829283503/">
+
+Selamat mencoba.
+Sumber http://www.evilmadscientist.com/article.php/joulethief

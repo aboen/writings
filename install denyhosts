@@ -1,0 +1,70 @@
+What is DenyHosts?
+
+DenyHosts is a Python script that analyzes the sshd server log messages to determine what hosts are attempting to hack into your system. It also determines what user accounts are being targeted. It keeps track of the frequency of attempts from each host.
+Additionally, upon discovering a repeated attack host, the /etc/hosts.deny file is updated to prevent future break-in attempts from that host.
+
+An email report can be sent to a system admin.
+Download http://denyhosts.sourceforge.net/
+
+root@kambium:~# wget http://sourceforge.net/projects/denyhosts/files/denyhosts/2.6/DenyHosts-2.6.tar.gz
+--2015-10-25 05:39:46--  http://sourceforge.net/projects/denyhosts/files/denyhosts/2.6/DenyHosts-2.6.tar.gz
+Resolving sourceforge.net (sourceforge.net)... 216.34.181.60
+Connecting to sourceforge.net (sourceforge.net)|216.34.181.60|:80... connected.
+HTTP request sent, awaiting response... 302 Found
+Location: http://sourceforge.net/projects/denyhosts/files/denyhosts/2.6/DenyHosts-2.6.tar.gz/download [following]
+--2015-10-25 05:39:46--  http://sourceforge.net/projects/denyhosts/files/denyhosts/2.6/DenyHosts-2.6.tar.gz/download
+Connecting to sourceforge.net (sourceforge.net)|216.34.181.60|:80... connected.
+HTTP request sent, awaiting response... 302 Found
+Location: http://downloads.sourceforge.net/project/denyhosts/denyhosts/2.6/DenyHosts-2.6.tar.gz?r=&ts=1445740786&use_mirror=tcpdiag [following]
+--2015-10-25 05:39:46--  http://downloads.sourceforge.net/project/denyhosts/denyhosts/2.6/DenyHosts-2.6.tar.gz?r=&ts=1445740786&use_mirror=tcpdiag
+Resolving downloads.sourceforge.net (downloads.sourceforge.net)... 216.34.181.59
+Connecting to downloads.sourceforge.net (downloads.sourceforge.net)|216.34.181.59|:80... connected.
+HTTP request sent, awaiting response... 302 Found
+Location: http://tcpdiag.dl.sourceforge.net/project/denyhosts/denyhosts/2.6/DenyHosts-2.6.tar.gz [following]
+--2015-10-25 05:39:46--  http://tcpdiag.dl.sourceforge.net/project/denyhosts/denyhosts/2.6/DenyHosts-2.6.tar.gz
+Resolving tcpdiag.dl.sourceforge.net (tcpdiag.dl.sourceforge.net)... 69.160.243.51
+Connecting to tcpdiag.dl.sourceforge.net (tcpdiag.dl.sourceforge.net)|69.160.243.51|:80... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 42667 (42K) [application/x-gzip]
+Saving to: `DenyHosts-2.6.tar.gz'
+
+100%[===========================================================================>] 42,667      --.-K/s   in 0.07s
+
+2015-10-25 05:39:46 (597 KB/s) - `DenyHosts-2.6.tar.gz' saved [42667/42667]
+root@kambium:~# tar -zxf DenyHosts-2.6.tar.gz
+root@kambium:~# cd DenyHosts-2.6
+root@kambium:~/DenyHosts-2.6# dir
+CHANGELOG.txt  LICENSE.txt  PKG-INFO    daemon-control-dist  denyhosts.py  scripts
+DenyHosts      MANIFEST.in  README.txt  denyhosts.cfg-dist   plugins       setup.py
+
+root@kambium:~/DenyHosts-2.6# python setup.py install
+
+sample configuration  by default at  directory /usr/share/denyhosts
+copy file  denyhosts.cfg-dist and rename to denyhosts.cfg
+
+root@kambium:~/DenyHosts-2.6# cd /usr/share/denyhosts
+root@kambium:/usr/share/denyhosts# cp denyhosts.cfg-dist denyhosts.cfg 
+
+edit file /usr/share/denyhosts/denyhosts.cfg
+Make sure this line and  settings to match your particular system.
+
+DENYHOSTS_BIN   = "/usr/bin/denyhosts.py"
+DENYHOSTS_LOCK  = "/var/lock/subsys/denyhosts"
+DENYHOSTS_CFG   = "/usr/share/denyhosts/denyhosts.cfg"
+
+Create a symbolic link from /etc/init.d such as:
+
+root@kambium:~/DenyHosts-2.6# cd /etc/init.d
+root@kambium:/etc/init.d# ln -s /usr/share/denyhosts/daemon-control denyhosts
+
+run denyhosts
+root@kambium:/# /etc/init.d/denyhosts start
+
+For debian system DenyHosts available as a Debian package. 
+Installation on Debian
+root@kambium:/# apt-get install denyhosts
+
+
+Links
+DenyHosts: http://denyhosts.sourceforge.net
+https://www.howtoforge.com/preventing_ssh_dictionary_attacks_with_denyhosts

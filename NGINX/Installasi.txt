@@ -1,0 +1,25 @@
+[root@ns5 etc]# rpm -Uvh http://download.fedora.redhat.com/pub/epel/5/$(uname -m)/epel-release-5-3.noarch.rpm
+
+
+buat file : rusia-repo.repo
+isinya :
+------------------------------------------------------
+[rusia-repo]
+name=CentOS-$releasever . rusia packages for $basearch
+#baseurl=file:///raid/RH/CentOS/$releasever/local/$basearch
+baseurl=http://centos.alt.ru/pub/repository/centos/5/i386/
+enabled=1
+gpgcheck=0
+protect=1
+-------------------------------------------------------
+
+[root@ns5 etc]# yum install nginx php-fpm
+
+Jalan kan 
+[root@ns5 etc]# service php-fpm start
+[root@ns5 etc]# service nginx start
+
+atau 
+
+[root@ns5 etc]# /etc/init.d/php-fpm start
+[root@ns5 etc]#/etc/init.d/nginx start

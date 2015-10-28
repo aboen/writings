@@ -1,0 +1,370 @@
+root@buah:~# apt-get update
+root@buah:~# apt-get upgarde
+root@buah:~# apt-get install postfix
+root@buah:~# postconf -e "home_mailbox = Maildir/"
+root@buah:~# postconf -e "mailbox_command = "
+root@buah:~# postconf -e "mydestination = buah.1bigtree.com, localhost.localdomain, localhost"
+root@buah:~# postconf -e "mynetworks = 127.0.0.0/8"
+
+bila mail server berada pada local network tambahkan network local misal (192.168.0.0/24 atau 10.0.0.0/24 ) sehingga isi dari
+mynetwork = 127.0.0.0/8, 192.168.0.0/24, 10.0.0.0/24
+
+root@buah:~# postconf -e "inet_interfaces = all"
+root@buah:~# postconf -e "inet_protocols = all"
+root@buah:~# postconf -e "myhostname = buah.1bigtree.com"
+root@buah:~# /etc/init.d/postfix start
+root@buah:~# tail -f /var/log/mail.log
+Nov 27 09:27:20 buah postfix/postfix-script[10576]: the Postfix mail system is not running
+Nov 27 09:47:15 buah postfix/master[10788]: daemon started -- version 2.7.0, configuration /etc/postfix
+
+Virtual account setup
+
+root@buah:~# groupadd -g 5000 vmail
+root@buah:~# useradd -m -u 5000 -g 5000 -s /bin/bash vmail
+root@buah:~# postconf -e "virtual_mailbox_domains = /etc/postfix/vhosts"
+root@buah:~# postconf -e "virtual_mailbox_base = /home/vmail"
+root@buah:~# postconf -e "virtual_mailbox_maps = hash:/etc/postfix/vmaps"
+root@buah:~# postconf -e "virtual_minimum_uid = 1000"
+root@buah:~# postconf -e "virtual_uid_maps = static:5000"
+root@buah:~# postconf -e "virtual_gid_maps = static:5000"
+
+Istirahat dulu ( karena langkah selanjutnya adalah menambahkan domainpada virtualhost nya ) :
+daftar domain untuk test cari aja subdomain datau domain .co.cc
+di sini saya pakai subdomain dari freedns.afraid.org karena banyak pilihan subdomian yang aneh2 :D
+register dulu di freedsn.afraid.org  kalau belum punya account
+kalau domian dah cocok masuk ke langkah selanjutnya.
+Domain dah dapat nih : gue.keren.la dan pulang.malam.or.id
+
+root@buah:~# echo "gue.keren.la" > /etc/postfix/vhosts
+root@buah:~# echo "pulang.malam.or.id" >>  /etc/postfix/vhosts
+root@buah:~# cat  /etc/postfix/vhosts
+gue.keren.la
+pulang.malam.or.id
+
+sudah di buat virtual domain nya
+selanjutnya buat email account dari domain2 tersebut
+formatnya adalah : email nama-domain/id_email
+contoh : admin@gue.keren.la gue.keren.la/admin/
+
+root@buah:~# echo "admin@gue.keren.la gue.keren.la/admin/" > /etc/postfix/vmaps
+root@buah:~# echo "nama@gue.keren.la gue.keren.la/nama/" >> /etc/postfix/vmaps
+root@buah:~# echo "admin@pulang.malam.or.id pulang.malam.or.id/admin/" >> /etc/postfix/vmaps
+root@buah:~# echo "ogah@pulang.malam.or.id pulang.malam.or.id/ogah/" >> /etc/postfix/vmaps
+root@buah:~# cat /etc/postfix/vmaps
+admin@gue.keren.la gue.keren.la/admin/
+nama@gue.keren.la gue.keren.la/nama/
+admin@pulang.malam.or.id pulang.malam.or.id/admin/
+ogah@pulang.malam.or.id pulang.malam.or.id/ogah/
+
+jalankan postmap untuk membuat file hast db dari account email tersebut.
+Tanpa  menjalankan postmap emailnya gak bakalan aktif :)
+
+root@buah:~# postmap /etc/postfix/vmaps
+
+Restart postfix
+root@buah:~# /etc/init.d/postfix restart
+ * Stopping Postfix Mail Transport Agent postfix                                                       [ OK ]
+ * Starting Postfix Mail Transport Agent postfix                                                       [ OK ]
+
+Test kirim email dari accont email ente yang lain misal dari yahoo atau gmail. sambil monitor log email
+root@buah:~# tail -f /var/log/mail.log
+Nov 27 10:46:20 buah postfix/smtpd[11318]: connect from mail-pw0-f50.google.com[209.85.160.50]
+Nov 27 10:46:20 buah postfix/smtpd[11318]: DB3E2E45E5: client=mail-pw0-f50.google.com[209.85.160.50]
+Nov 27 10:46:21 buah postfix/cleanup[11335]: DB3E2E45E5: message-id=<4CF127BF.2060501@gmail.com>
+Nov 27 10:46:21 buah postfix/qmgr[11261]: DB3E2E45E5: from=<xxxxxxxx@gmail.com>, size=1968, nrcpt=1 (queue active)
+Nov 27 10:46:21 buah postfix/virtual[11336]: DB3E2E45E5: to=<admin@gue.keren.la>, relay=virtual, delay=0.62, delays=0.61/0.01/0/0.01, dsn=2.0.0, status=sent (delivered to maildir)
+Nov 27 10:46:21 buah postfix/qmgr[11261]: DB3E2E45E5: removed
+Nov 27 10:46:51 buah postfix/smtpd[11318]: disconnect from mail-pw0-f50.google.com[209.85.160.50]
+
+Sip dah sudah bisa terima email
+
+atau test dari system sendiri 
+root@buah:/etc#  mail ogah@pulang.malam.or.id
+Subject: cobain email
+cobain email aja
+jangan lupa tekan titik setelah ini
+.
+Cc:
+
+Jangan lupa sebelum baris cc: ada titik (dot) untuk mengakhiri isi dari email
+
+hasil di log :
+Nov 27 11:09:54 buah postfix/pickup[11260]: B71D5E4606: uid=0 from=<root>
+Nov 27 11:09:54 buah postfix/cleanup[11558]: B71D5E4606: message-id=<20101127160954.B71D5E4606@localhost>
+Nov 27 11:09:54 buah postfix/qmgr[11261]: B71D5E4606: from=<root@buah.1bigtree.com>, size=346, nrcpt=1 (queue active)
+Nov 27 11:09:54 buah postfix/virtual[11573]: B71D5E4606: to=<ogah@pulang.malam.or.id>, relay=virtual, delay=0.04, delays=0.03/0/0/0, dsn=2.0.0, status=sent (delivered to maildir)
+Nov 27 11:09:54 buah postfix/qmgr[11261]: B71D5E4606: removed
+
+Sudah Ok nih... 
+biar tambah yakin nih cek di dalam folder nya mail box
+root@buah:/etc# ls /home/vmail/gue.keren.la/admin/new
+1290872781.V801If4009M308966.buah.1bigtree.com
+
+tuh dah kelian ada file emailnya
+
+Selanjutnya :
+
+Install Dovecot IMAP/POP3 server
+buat apa ? agar bisa lihat dan kirim email lewat email client ( firefox, outlook, dll )
+caranya :
+
+root@buah:/# apt-get install dovecot-common dovecot-imapd dovecot-pop3d
+root@buah:/# mv /etc/dovecot/dovecot.conf /etc/dovecot/dovecot.conf.orig
+root@buah:/# vi /etc/dovecot/dovecot.conf
+
+isi dengan configurasi berikut:
+# awal config
+base_dir = /var/run/dovecot/
+protocols = imap pop3
+disable_plaintext_auth = yes
+shutdown_clients = yes
+log_path = /var/log/dovecot
+info_log_path = /var/log/dovecot.info
+log_timestamp = "%Y-%m-%d %H:%M:%S "
+ssl = no
+#In Ubuntu 10.04 Lucid Lynx: ssl = no
+login_dir = /var/run/dovecot/login
+login_chroot = yes
+login_user = dovecot
+login_greeting = Dovecot ready.
+mail_location = maildir:/home/vmail/%d/%n
+mmap_disable = no
+valid_chroot_dirs = /var/spool/vmail
+protocol imap {
+  login_executable = /usr/lib/dovecot/imap-login
+  mail_executable = /usr/lib/dovecot/imap
+}
+protocol pop3 {
+  login_executable = /usr/lib/dovecot/pop3-login
+  mail_executable = /usr/lib/dovecot/pop3
+  pop3_uidl_format = %08Xu%08Xv
+}
+auth_executable = /usr/lib/dovecot/dovecot-auth
+auth_verbose = yes
+auth default {
+  mechanisms = plain cram-md5
+  passdb passwd-file {
+    args = /etc/dovecot/passwd
+  }
+  userdb passwd-file {
+    args = /etc/dovecot/users
+  }
+  user = root
+}
+#akhir config
+
+Selanjutnya buat password untuk account email tersebut yang sudah kita buat sebelumnya
+pada bagian akhir dari config (bagian auth default) terlihat :
+-----------------------------------------
+auth default {
+  mechanisms = plain cram-md5
+  passdb passwd-file {
+    args = /etc/dovecot/passwd
+  }
+  userdb passwd-file {
+    args = /etc/dovecot/users
+  }
+  user = root
+  socket listen {
+    client {
+      # The client socket is generally safe to export to everyone. Typical use
+      # is to export it to your SMTP server so it can do SMTP AUTH lookups
+      # using it.
+      path = /var/spool/postfix/private/auth-client
+      mode = 0660
+      user = postfix
+      group = postfix
+    }
+  }
+}
+-----------------------------------------
+perhatikan pada bagian args = /etc/dovecot/passwd dan  args = /etc/dovecot/users
+formatnya seprti berikut :
+/etc/dovecot/users:
+account@domain.com::5000:5000::/home/vmail/domain.com/:/bin/false::
+
+/etc/dovecot/passwd:
+account@domain.com:$1$G/FqlOG5$Vj0xmc9fKY.UVr8OWr/7C1
+
+buat untuk file user dahulu,
+
+root@buah:/# echo "admin@gue.keren.la::5000:5000::/home/vmail/gue.keren.la/:/bin/false::" > /etc/dovecot/users
+root@buah:/# echo "nama@gue.keren.la::5000:5000::/home/vmail/gue.keren.la/:/bin/false::" >> /etc/dovecot/users
+root@buah:/# echo "admin@pulang.malam.or.id::5000:5000::/home/vmail/pulang.malam.or.id/:/bin/false::" >> /etc/dovecot/users
+root@buah:/# echo "ogah@pulang.malam.or.id::5000:5000::/home/vmail/pulang.malam.or.id/:/bin/false::" >> /etc/dovecot/users
+root@buah:~# cat   /etc/dovecot/users
+admin@gue.keren.la::5000:5000::/home/vmail/gue.keren.la/:/bin/false::
+nama@gue.keren.la::5000:5000::/home/vmail/gue.keren.la/:/bin/false::
+admin@pulang.malam.or.id::5000:5000::/home/vmail/pulang.malam.or.id/:/bin/false::
+ogah@pulang.malam.or.id::5000:5000::/home/vmail/pulang.malam.or.id/:/bin/false::
+
+selanjutnya untuk file passwd
+root@buah:~# dovecotpw -u admin@gue.keren.la
+Enter new password:
+Retype new password:
+{CRAM-MD5}5f49103309d89dcd15571d3e6e75f8a126f76095b0cf5c73f8a1ab6755e800e6
+root@buah:~# echo  "admin@gue.keren.la:{CRAM-MD5}5f49103309d89dcd15571d3e6e75f8a126f76095b0cf5c73f8a1ab6755e800e6" > /etc/dovecot/passwd
+root@buah:~# dovecotpw -u nama@gue.keren.la
+Enter new password:
+Retype new password:
+{CRAM-MD5}0eee4afb36bf87006ee1738b651bf92c4fbb784de85d211add00b04f8f019885
+root@buah:~# echo "nama@gue.keren.la:{CRAM-MD5}0eee4afb36bf87006ee1738b651bf92c4fbb784de85d211add00b04f8f019885" >> /etc/dovecot/passwd
+root@buah:~# dovecotpw -u admin@pulang.malam.or.id
+Enter new password:
+Retype new password:
+{CRAM-MD5}5f49103309d89dcd15571d3e6e75f8a126f76095b0cf5c73f8a1ab6755e800e6
+root@buah:~# echo "admin@pulang.malam.or.id:{CRAM-MD5}5f49103309d89dcd15571d3e6e75f8a126f76095b0cf5c73f8a1ab6755e800e6" >> /etc/dovecot/passwd
+root@buah:~# dovecotpw -u ogah@pulang.malam.or.id
+Enter new password:
+Retype new password:
+{CRAM-MD5}0eee4afb36bf87006ee1738b651bf92c4fbb784de85d211add00b04f8f019885
+root@buah:~# echo "ogah@pulang.malam.or.id:{CRAM-MD5}0eee4afb36bf87006ee1738b651bf92c4fbb784de85d211add00b04f8f019885" >> /etc/dovecot/passwd
+
+jalankan atau restart dovecot
+
+root@buah:~# /etc/init.d/dovecot restart
+ * Restarting IMAP/POP3 mail server dovecot                                                                                            If you have trouble with authentication failures,
+enable auth_debug setting. See http://wiki.dovecot.org/WhyDoesItNotWork
+This message goes away after the first successful login.
+                                                                                                                                [ OK ]
+SETING SASL
+SASL bertugas agar dapat merelay email selain dari network yang ada sendiri misal untuk user yang berada di luar bisa kirim email lewat isp lain.
+root@buah:~# postconf -e 'smtpd_sasl_auth_enable = yes'
+root@buah:~# postconf -e 'smtpd_sasl_security_options = noplaintext,noanonymous'
+root@buah:~# postconf -e 'smtpd_recipient_restrictions = permit_sasl_authenticated,permit_mynetworks,reject_unauth_destination'
+root@buah:~# postconf -e 'smtpd_sasl_type = dovecot'
+root@buah:~# postconf -e 'smtpd_sasl_path = private/auth-client'
+root@buah:~# echo "mech_list: cram-md5" > /etc/postfix/sasl/smtpd.conf
+
+restart postfix
+root@buah:~# /etc/init.d/postfix restart
+ * Stopping Postfix Mail Transport Agent postfix                                                                                                [ OK ]
+ * Starting Postfix Mail Transport Agent postfix                                                                                                [ OK ]
+
+Seharusnya sampai di sini sudah sudah jalan Ok semua :D
+Tetapi bisanya ISp memblock port 25 sehingga kita tidak bisa mengirim email dari smtp domain kita lewat postfix.
+solusinya tambahkan port untuk mengirim email pada /etc/postfix/master.cf misal port 2525 jangan lupa untuk membuka port tersebut pada firewall. Tambahakan baris berikut pada akhir file master.cf
+
+2525 inet n - n - - smtpd
+
+Akhirnya mulai jam 9.30 malem dan  sekarang 1.30 pagi kelar sudah waktunya tidur 
+
+Melanjutkan hasil diatas masih ada yang kurang yaitu anti virus menggunakan ClamAV (antivirus), dan ClamSMTP (penghubung postix dan antivirus).
+time : 7.30 PM
+secangkir copy : done
+Rokok sisa semalem : done 
+
+Install Clamav 
+root@buah:~# apt-get install clamav-daemon clamav
+
+Install clamsmtp
+root@buah:~# apt-get install clamsmtp
+Reading package lists... Done
+Building dependency tree
+Reading state information... Done
+E: Couldn't find package clamsmtp
+
+walah gak ketemu kita cek dulu paket mirrornya
+edit file repo nya tambahin universe pada baris beriku:
+deb http://archive.ubuntu.com/ubuntu lucid main 
+root@buah:~# vi  /etc/apt/sources.list
+sehingga menjadi ceperti berikut:
+root@buah:~# cat /etc/apt/sources.list
+deb http://archive.ubuntu.com/ubuntu lucid main universe
+deb http://security.ubuntu.com/ubuntu lucid-security main
+
+ulangi lagi
+root@buah:~# apt-get install clamsmtp
+
+ClamAV dan ClamSMTP sudah terinstall selanjutnya tinggal edit main.cf pada postfix
+dan tambahkan baris berikut
+content_filter = scan:127.0.0.1:10026
+receive_override_options = no_address_mappings
+
+root@buah:~# vi /etc/postfix/main.cf
+tambahkan pada baris berikut:
+# Uncomment the next line to generate "delayed mail" warnings
+#delay_warning_time = 4h
+content_filter = scan:127.0.0.1:10026
+receive_override_options = no_address_mappings
+
+tambahkan  pada master.cf setelah baris 
+smtp      inet  n       -       -       -       -       smtpd
+tambahkan code berikut dan pastikan tidak ada spasi kosong setelah tanda = (samadengan)
+# AV scan filter (used by content_filter)
+scan      unix  -       -       n       -       16      smtp
+        -o smtp_send_xforward_command=yes
+# For injecting mail back into postfix from the filter
+127.0.0.1:10025 inet  n -       n       -       16      smtpd
+        -o content_filter=
+        -o receive_override_options=no_unknown_recipient_checks,no_header_body_checks
+        -o smtpd_helo_restrictions=
+        -o smtpd_client_restrictions=
+        -o smtpd_sender_restrictions=
+        -o smtpd_recipient_restrictions=permit_mynetworks,reject
+        -o mynetworks_style=host
+        -o smtpd_authorized_xforward_hosts=127.0.0.0/8
+
+root@buah:~# vi /etc/postfix/master.cf
+sehingga terlihat kurang lebih seperti berikut :
+# ==========================================================================
+# service type  private unpriv  chroot  wakeup  maxproc command + args
+#               (yes)   (yes)   (yes)   (never) (100)
+# ==========================================================================
+smtp      inet  n       -       -       -       -       smtpd
+# AV scan filter (used by content_filter)
+scan      unix  -       -       n       -       16      smtp
+        -o smtp_send_xforward_command=yes
+# For injecting mail back into postfix from the filter
+127.0.0.1:10025 inet  n -       n       -       16      smtpd
+        -o content_filter=
+        -o receive_override_options=no_unknown_recipient_checks,no_header_body_checks
+        -o smtpd_helo_restrictions=
+        -o smtpd_client_restrictions=
+        -o smtpd_sender_restrictions=
+        -o smtpd_recipient_restrictions=permit_mynetworks,reject
+        -o mynetworks_style=host
+        -o smtpd_authorized_xforward_hosts=127.0.0.0/8
+#submission inet n       -       -       -       -       smtpd
+
+waktunya restart postfix, clamav, dan clamsmtp
+
+root@buah:~# vi /etc/postfix/master.cf
+root@buah:~# /etc/init.d/postfix restart
+ * Stopping Postfix Mail Transport Agent postfix                                                           [ OK ]
+ * Starting Postfix Mail Transport Agent postfix                                                           [ OK ]
+root@buah:~#  /etc/init.d/clamsmtp restart
+Restarting virus filtering SMTP proxy: clamsmtpd.
+root@buah:~# /etc/init.d/clamav-daemon restart
+ * Stopping ClamAV daemon clamd
+
+Dicoba.. dicoba.. di coba
+buka konsol lagi dan monitor log
+root@buah:~# tail -f /var/log/mail.log
+
+download sampel virus
+root@buah:~# wget http://eicar.org/download/eicar_com.zip
+root@buah:~# apt-get install mutt
+root@buah:~# echo | mutt  -a  eicar_com.zip -- admin@gue.keren.la
+
+keliatan dari log:
+Nov 28 09:45:59 buah clamsmtpd: 100002: accepted connection from: 127.0.0.1
+Nov 28 09:45:59 buah postfix/smtpd[595]: connect from localhost.localdomain[127.0.0.1]
+Nov 28 09:45:59 buah postfix/smtpd[595]: EAC36E40BF: client=localhost.localdomain[127.0.0.1]
+Nov 28 09:46:00 buah postfix/smtp[593]: D52A5E4504: to=<admin@gue.keren.la>, relay=127.0.0.1[127.0.0.1]:10026, del                 ay=0.44, delays=0.02/0.02/0.05/0.36, dsn=2.0.0, status=sent (250 Virus Detected; Discarded Email)
+Nov 28 09:46:00 buah clamsmtpd: 100002: from=root@buah.1bigtree.com, to=admin@gue.keren.la, status=VIRUS:Eicar-Tes                 t-Signature
+Nov 28 09:46:00 buah postfix/qmgr[31786]: D52A5E4504: removed
+
+
+Ketangkep tuh virusnya.
+Test lewat situs lain http://www.gfi.com/emailsecuritytest/
+
+Untuk antisipasi email spam silakan gunakan:
+https://help.ubuntu.com/community/Postfix/Dspam
+https://help.ubuntu.com/community/Postfix/SPF
+https://help.ubuntu.com/community/Postfix/DomainKeys
+
+Sumber : 
+https://help.ubuntu.com/community/PostfixCompleteVirtualMailSystemHowto
+https://help.ubuntu.com/community/PostfixVirtualMailBoxClamSmtpHowto
+https://help.ubuntu.com/community/Postfix?highlight=((PostfixVirtualMailBoxClamSmtpHowto))

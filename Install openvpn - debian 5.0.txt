@@ -1,0 +1,126 @@
+OPENVPN SERVER PADA DEBIAN 5.0
+
+# uname -a
+Linux buah.1bigtree.com 2.6.26-2-xen-686 #1 SMP Fri Sep 17 00:54:08 UTC 2010 i686 GNU/Linux
+
+# apt-get install openvpn
+Reading package lists... Done
+Building dependency tree
+Reading state information... Done
+The following extra packages will be installed:
+  libdb4.5 liblzo2-2 libpkcs11-helper1 libsqlite3-0 mime-support openssl openssl-blacklist openvpn-blacklist python
+  python-minimal python2.5 python2.5-minimal
+Suggested packages:
+  ca-certificates resolvconf python-doc python-tk python-profiler python2.5-doc binfmt-support
+The following NEW packages will be installed:
+  libdb4.5 liblzo2-2 libpkcs11-helper1 libsqlite3-0 mime-support openssl openssl-blacklist openvpn openvpn-blacklist python
+  python-minimal python2.5 python2.5-minimal
+0 upgraded, 13 newly installed, 0 to remove and 0 not upgraded.
+Need to get 14.0MB of archives.
+After this operation, 35.8MB of additional disk space will be used.
+Do you want to continue [Y/n]? Y
+
+Ternyata letak folder easy-rsa tidak sama dengan centos.
+cari dulu dimana letaknya :
+# find / -name easy-rsa
+/usr/share/doc/openvpn/examples/easy-rsa
+
+Ternyata di /usr/share/doc/openvpn/examples/easy-rsa
+
+# cp -R /usr/share/doc/openvpn/examples/easy-rsa /etc/openvpn
+# cd /etc/openvpn/easy-rsa/2.0
+
+Edit file vars, lihat bagian paling bawah
+# vi vars
+
+Sesuaikan bagian berikut kebutuhan 
+Ganti bagian ini sesuaikan dengan kebutuhan
+
+export KEY_COUNTRY="US"
+export KEY_PROVINCE="TX"
+export KEY_CITY="Dallas"
+export KEY_ORG="my org"
+export KEY_EMAIL="email@mydomain.tld"
+
+Jalankan file vars untuk membuat ca.key
+# source ./vars
+NOTE: If you run ./clean-all, I will be doing a rm -rf on /etc/openvpn/easy-rsa/2.0/keys
+# ./clean-all
+# ./build-ca
+Generating a 1024 bit RSA private key
+....................++++++
+.............................++++++
+writing new private key to 'ca.key'
+-----
+
+Buat privat key untuk server
+# ./build-key-server server
+Generating a 1024 bit RSA private key
+.......................++++++
+..............................++++++
+writing new private key to 'server.key'
+-----
+
+Buat privat key untuk client dalam hal ini nama clinetnya adalah vpngue
+# ./build-key vpngue
+Generating a 1024 bit RSA private key
+........................................++++++
+.........++++++
+writing new private key to 'vpngue.key'
+-----
+
+Jalankan file build-dh (Diffie Hellman)
+"Diffie Hellman Parameter" untuk mengatur metode pertukaran kunci dan otentikasi yang digunakan oleh server OpenVPN
+
+# ./build-dh
+Generating DH parameters, 1024 bit long safe prime, generator 2
+This is going to take a long time
+........................................................................+...................................................................+.......................+..+....................................................................................+.....................................................+.............+.....+............................................++*++*++*
+
+Pindahkan folder key ke /etc/openvpn
+# mv keys /etc/openvpn/
+
+Salin file konfigurasi server pada contoh config
+# cp /usr/share/doc/openvpn/examples/sample-config-files/server.conf.gz /etc/openvpn/
+# cd /etc/openvpn/
+# gunzip server.conf.gz
+# vi server.conf
+
+Edit bagian berikut sehinga menjadi
+# (see "pkcs12" directive in man page).
+ca keys/ca.crt
+cert keys/server.crt
+key keys/server.key # This file should be kept secret
+
+# Diffie hellman parameters.
+dh keys/dh1024.pem
+
+IPTABLES SETING
+Seting berikut di khususkan untuk openvpn client agar bisa untuk akses internet melalui openvpn server
+# echo 1 > /proc/sys/net/ipv4/ip_forward
+Agar permanen ubah net.ipv4.ip_forward = 0 mejadi net.ipv4.ip_forward = 1 dalam /etc/sysctl.conf
+# vi /etc/sysctl.conf
+
+# Uncomment the next line to enable packet forwarding for IPv4
+net.ipv4.ip_forward=1
+
+# iptables -A FORWARD -m state --state RELATED,ESTABLISHED -j ACCEPT
+# iptables -A FORWARD -s 10.8.0.0/24 -j ACCEPT
+# iptables -t nat -A POSTROUTING -s 10.8.0.0/24 -j SNAT --to xxx.xxx.xxx.xxx
+# iptables -I INPUT -p udp -m udp --dport 1194 -j ACCEPT
+# iptables -A FORWARD -j REJECT
+# iptables-save
+
+TESTING
+Jalankan openvpn
+# # /etc/init.d/openvpn start
+Starting virtual private network daemon: server.
+
+cek apakah sudah jalan 
+# ps ax |grep openvpn
+ 3476 ?        Ss     0:00 /usr/sbin/openvpn --writepid /var/run/openvpn.server.pid --daemon ovpn-server --cd /etc/openvpn --config /etc/openvpn/server.conf
+ 3494 pts/0    S+     0:00 grep openvpn
+
+berarti sudah jalan 
+
+

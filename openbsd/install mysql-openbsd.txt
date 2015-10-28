@@ -1,0 +1,195 @@
+$ sudo pkg_add -v http://dl2.foss-id.web.id/openbsd/4.3/packages/i386/mysql-server-5.0.51a.tgz
+parsing http://dl2.foss-id.web.id/openbsd/4.3/packages/i386/mysql-server-5.0.51a.tgz
+Dependencies for mysql-server-5.0.51a resolve to: p5-DBD-mysql-4.005, mysql-client-5.0.51a
+found libspec c.43.0 in /usr/lib
+found libspec crypto.13.0 in /usr/lib
+found libspec m.2.3 in /usr/lib
+found libspec mysqlclient.18.0 in package mysql-client-5.0.51a
+found libspec pthread.9.0 in /usr/lib
+found libspec ssl.11.0 in /usr/lib
+found libspec wrap.4.0 in /usr/lib
+found libspec z.4.1 in /usr/lib
+adding group _mysql
+adding user _mysql
+installed /etc/my.cnf from /usr/local/share/mysql/my-medium.cnf****************************************************************    | 96%
+mysql-server-5.0.51a: complete
+--- mysql-server-5.0.51a -------------------
+You can find detailed instructions on how to install a database
+in /usr/local/share/doc/mysql/README.OpenBSD.
+
+$ more /usr/local/share/doc/mysql/README.OpenBSD
+
+Using MySQL in an OpenBSD environment
+
+If you are installing MySQL for the first time, you have to create
+a default database first. In order to create the database, please run
+/usr/local/bin/mysql_install_db
+
+The default limit in the GENERIC kernel for number of open
+files is not large enough for a database with more than a handful
+of tables, or a large number of connections. A server running
+such a database should have at least the following in
+/etc/sysctl.conf:
+
+        kern.maxfiles=4096
+
+This number should be tuned depending on system use. You will also
+need to tune the values in the my.cnf file (examples available in
+/usr/local/share/mysql).
+
+By default, the _mysql user, and so the mysqld processes run in
+the login(1) class of "daemon". On a busy server, it may be advisable
+to put the _mysql user and processes in their own login(1) class
+with tuned resources, such as more open file descriptors etc.
+
+For example, add this to the login.conf(5) file:
+
+        mysql:\
+                :openfiles-cur=1024:\
+                :openfiles-max=2048:\
+                :tc=daemon:
+
+Rebuild the login.conf.db file if necessary:
+
+        # cap_mkdb /etc/login.conf
+
+And start the server like this:
+
+        if [ -x /usr/local/bin/mysqld_safe ] ; then
+                su -c mysql root -c '/usr/local/bin/mysqld_safe >/dev/null 2>&1 &'
+                echo -n ' mysql'
+        fi
+
+mysqld_safe(1) is the recommended way to start a mysqld server,
+it creates the directory for the socket and adds some safety
+features such as restarting the server when an error occurs
+and logging runtime information to an error log file. Options
+may be passed in the [mysqld_safe] section of my.cnf.
+
+Note that the classes in login.conf(5) are used by login(1);
+they do not apply to normal process startup, hence the use of su(1).
+
+For larger servers and dedicated database servers, these numbers
+and memory limits (e.g. datasize and stacksize) may also need to be
+increased. Please report any changes and experiences to the package
+maintainers so that we can update this file for future versions.
+
+
+$ sudo /usr/local/bin/mysql_install_db
+Installing MySQL system tables...
+OK
+Filling help tables...
+OK
+PLEASE REMEMBER TO SET A PASSWORD FOR THE MySQL root USER !
+To do so, start the server, then issue the following commands:
+/usr/local/bin/mysqladmin -u root password 'new-password'
+/usr/local/bin/mysqladmin -u root -h motorent.my.domain password 'new-password'
+
+Alternatively you can run:
+/usr/local/bin/mysql_secure_installation
+
+which will also give you the option of removing the test
+databases and anonymous user created by default.  This is
+strongly recommended for production servers.
+
+See the manual for more instructions.
+
+Please report any problems with the /usr/local/bin/mysqlbug script!
+
+The latest information about MySQL is available on the web at
+http://www.mysql.com
+Support MySQL by buying support/licenses at http://shop.mysql.com
+$
+$ sudo vi /etc/sysctl.conf
+isikan " kern.maxfiles=4096 "
+$ sudo vi /etc/login.conf
+isikan :
+"        _mysql:\
+                :openfiles-cur=1024:\
+                :openfiles-max=2048:\
+                :tc=daemon:
+"
+
+kemudian rebuild login.conf.db
+$ sudo cap_mkdb /etc/login.conf
+
+Jalankan mysql
+$ sudo  /usr/local/bin/mysqld_safe &
+[1] 19595
+$ Starting mysqld daemon with databases from /var/mysql
+
+Setup Root Pasword mysql
+
+$ sudo /usr/local/bin/mysql_secure_installation
+
+
+
+
+NOTE: RUNNING ALL PARTS OF THIS SCRIPT IS RECOMMENDED FOR ALL MySQL
+      SERVERS IN PRODUCTION USE!  PLEASE READ EACH STEP CAREFULLY!
+
+
+In order to log into MySQL to secure it, we'll need the current
+password for the root user.  If you've just installed MySQL, and
+you haven't set the root password yet, the password will be blank,
+so you should just press enter here.
+
+
+Enter current password for root (enter for none): <kosongkan langsung enter>
+OK, successfully used password, moving on...
+
+Setting the root password ensures that nobody can log into the MySQL
+root user without the proper authorisation.
+
+Set root password? [Y/n] Y <pilih Y>
+New password: <masukan password baru>
+Re-enter new password:  <masukan pasword yang sama>
+Password updated successfully!
+Reloading privilege tables..
+ ... Success!
+
+
+By default, a MySQL installation has an anonymous user, allowing anyone
+to log into MySQL without having to have a user account created for
+them.  This is intended only for testing, and to make the installation
+go a bit smoother.  You should remove them before moving into a
+production environment.
+
+Remove anonymous users? [Y/n] Y <pilih Y>
+ ... Success!
+
+Normally, root should only be allowed to connect from 'localhost'.  This
+ensures that someone cannot guess at the root password from the network.
+
+Disallow root login remotely? [Y/n] Y <pilih Y>
+ ... Success!
+
+By default, MySQL comes with a database named 'test' that anyone can
+access.  This is also intended only for testing, and should be removed
+before moving into a production environment.
+
+Remove test database and access to it? [Y/n] Y <pilih Y>
+ - Dropping test database...
+ ... Success!
+ - Removing privileges on test database...
+ ... Success!
+
+Reloading the privilege tables will ensure that all changes made so far
+will take effect immediately.
+
+Reload privilege tables now? [Y/n] Y
+ ... Success!
+
+Cleaning up...
+
+
+
+All done!  If you've completed all of the above steps, your MySQL
+installation should now be secure.
+
+Thanks for using MySQL!
+
+
+
+
+

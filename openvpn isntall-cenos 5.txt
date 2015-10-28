@@ -1,0 +1,216 @@
+Installasi dan setup openvpn server
+
+VPN aka virtual private network, yaitu jaringan pribadi (bukan untuk akses umum) yang menggunakan medium nonpribadi (misalnya internet) untuk menghubungkan antar remote-site secara aman. Perlu penerapan teknologi tertentu agar walaupun menggunakan medium yang umum, tetapi traffic (lalu lintas) antar remote-site tidak dapat disadap dengan mudah, juga tidak memungkinkan pihak lain untuk menyusupkan traffic yang tidak semestinya ke dalam remote-site.
+lebih jelas tentang vpn bisa dibaca disini http://id.wikipedia.org/wiki/VPN dan http://computer.howstuffworks.com/vpn.htm
+
+Openvpn petualangan bermula.
+OpenVPN merupakan  fitur lengkap dari open source SSL VPN solusi  yang mengakomodasi berbagai konfigurasi, termasuk akses remote, VPN site-to-site, keamanan Wi-Fi, dan juga untuk skala enterprise adalah solusi akses remote dengan load balancing, failover, dan fine-grained  akses-kontrol. Bahwasanya kompleksitas adalah musuh keamanan, OpenVPN menawarkan alternatif, hemat biaya ringan untuk teknologi VPN lain yang baik-ditargetkan untuk pasar UKM dan perusahaan besar.
+
+OpenVPN memiliki desain yang ringan, banyaknya kompleksitas merupakan yang menjadi ciri  implementasi VPN jenis lainnya. Model keamanan OpenVPN didasarkan pada SSL, yang menjadi standar industri untuk komunikasi yang aman melalui internet. OpenVPN menerapkan OSI layer 2 atau 3 dengan jaringan yang aman dan menggunakan entensi protokol SSL / TLS, mendukung metode otentikasi klien berdasarkan sertifikat yang fleksibel, smart card, dan / atau 2-faktor otentikasi, dan memungkinkan pengguna atau  kelompok khusus dengan kebijakan akses kontrol  menggunakan aturan firewall dan diterapkan pada virtual interface VPN. OpenVPN bukanlah sebuah aplikasi web proxy dan tidak beroperasi melalui web browser.
+
+
+Versi openvpn ada 2 yaitu : 
+OpenVPN Community Edition http://openvpn.net/index.php/open-source.html
+Ini adalah versi yang free tetapi ada beberapa fitur yang tidak disertakan.
+
+dan 
+OpenVPN Access Server http://openvpn.net/index.php/access-server/download-openvpn-as.html
+Ini adalah versi berbayar 
+perbandingan fitur yang di punyai bisa dilihat disini 
+http://openvpn.net/index.php/access-server/section-faq-openvpn-as/32-general/225-compare-openvpn-community-and-enterprise-editions-.html
+
+OpenVPN berjalan pada Operating system : Linux, Windows 2000/XP/Vista/7 dan lebih tinggi, OpenBSD, FreeBSD, NetBSD, Mac OS X, dan Solaris.
+
+Goal :
+Openvpn  disini dikhususkan hanya untuk akses internet menurut beberapa kawan yang melakukan testing untuk akses internasional  terasa lebih cepat.
+
+Pada Openvpn Server :
+
+Bahan : 
+Server untuk di jadikan vpn server (Linux CentOS 5.5) http://centos.org
+OpenVPN Community Edition http://openvpn.net/index.php/open-source.html
+
+Mulai meramu bahan.
+
+Install EPEL Repo.
+# rpm -Uvh http://download.fedora.redhat.com/pub/epel/5/i386/epel-release-5-4.noarch.rpm
+
+Install openvpn
+# yum install openvpn
+
+Copy easy-rsa ke dalam /etc/openvpn
+# cp -R /usr/share/openvpn/easy-rsa /etc/openvpn
+
+Pindah ke dalam direktori /etc/openvpn/easy-rsa/2.0
+# cd /etc/openvpn/easy-rsa/2.0
+
+Edit file vars
+# vi vars
+Ganti bangian ini sesuaikan dengan kebutuhan 
+
+export KEY_COUNTRY="US"
+export KEY_PROVINCE="TX"
+export KEY_CITY="Dallas"
+export KEY_ORG="my org"
+export KEY_EMAIL="email@mydomain.tld"
+
+Jalankan file vars untuk membuat ca.key
+# source ./vars
+NOTE: If you run ./clean-all, I will be doing a rm -rf on /etc/openvpn/easy-rsa/2.0/keys
+# ./clean-all
+# ./build-ca
+Generating a 1024 bit RSA private key
+.....................++++++
+.......................++++++
+writing new private key to 'ca.key'
+-----
+
+Buat privat key untuk server
+# ./build-key-server server
+Generating a 1024 bit RSA private key
+...............................++++++
+..............................++++++
+writing new private key to 'server.key'
+-----
+
+Buat privat key untuk client Ulangi langkah ini untuk lebih dari 1 client disini saya buat 2 client (nama client bisa di ganti sesuka hati). 
+# ./build-key client
+Generating a 1024 bit RSA private key
+..............................................++++++
+......++++++
+writing new private key to 'client.key'
+-----
+# ./build-key client2
+Generating a 1024 bit RSA private key
+..............................................++++++
+......++++++
+writing new private key to 'client2.key'
+-----
+
+
+jalankan file build-dh (Diffie Hellman)
+"Diffie Hellman Parameter" untuk mengatur metode pertukaran kunci dan otentikasi yang digunakan oleh server OpenVPN
+# ./build-dh
+Generating DH parameters, 1024 bit long safe prime, generator 2
+This is going to take a long time
+..........................+...............................................................................+.....................+
+
+
+Pindahkan folder key ke /etc/openvpn
+# mv keys /etc/openvpn/
+
+salin file konfigurasi server pada contoh config
+# cp /usr/share/doc/openvpn-2.1.1/sample-config-files/server.conf /etc/openvpn/
+
+edit file konfigurasi server.conf
+# vi  /etc/openvpn/server.conf
+
+edit bagin berikut sehinga menjadi 
+
+# (see "pkcs12" directive in man page).
+ca keys/ca.crt
+cert keys/server.crt
+key keys/server.key  # This file should be kept secret
+
+# Diffie hellman parameters.
+dh keys/dh1024.pem
+
+Hapus tanda komentar (;) pada bagian ini :
+
+;push "redirect-gateway def1 bypass-dhcp"
+
+menjadikan default gateway, dns, web browsing, email akan di redirect dan mengunakan jalur dari vpn
+
+Hapus tanda komentar (;) pada bagian ini :
+
+;push "dhcp-option DNS 208.67.222.222"
+;push "dhcp-option DNS 208.67.220.220"
+
+Secara default dns di atas mengunakan opendns, disini saya menambahkan dns google .
+
+hasilnya menjadi seperti berikut:
+
+push "redirect-gateway def1 bypass-dhcp"
+push "dhcp-option DNS 8.8.8.8"
+push "dhcp-option DNS 8.8.4.4"
+push "dhcp-option DNS 208.67.222.222"
+push "dhcp-option DNS 208.67.220.220"
+
+
+IPTABLE SETING 
+Seting berikut di khususkan untuk openvpn client agar bisa untuk akses internet melalui openvpn server
+# echo 1 > /proc/sys/net/ipv4/ip_forward
+
+biar permanen ubah net.ipv4.ip_forward = 0 mejadi net.ipv4.ip_forward = 1 dalam /etc/sysctl.conf
+# vi /etc/sysctl.conf
+
+Jalankan iptables sebagai berikut. 
+Agar setelah reboot tetap jalan, tambahkan di /etc/rc.local.
+Atau bila tidak bila tidak mau di tambahkan pada /rtc/rc.local bisa menjalankan perintah iptables-save.
+Ganti ip 123.123.123.123 dengan IP vpn server.
+
+
+# iptables -A FORWARD -m state --state RELATED,ESTABLISHED -j ACCEPT
+# iptables -A FORWARD -s 10.8.0.0/24 -j ACCEPT
+# iptables -t nat -A POSTROUTING -s 10.8.0.0/24  -j SNAT --to 123.123.123.123
+# iptables -I INPUT  -p udp  -m udp --dport 1194 -j ACCEPT
+# iptables -A FORWARD -j REJECT
+# iptables-save
+
+TESTING
+jalankan openvpn
+# /etc/init.d/openvpn start
+Starting openvpn:                                          [  OK  ]
+
+jalankan chkconfig agar setiap server di restart openvpn akan di jalankan
+# chkconfig openvpn on
+
+liat dan monitor log bila ada error 
+# tail -f /var/log/messages
+
+Pada Openvpn Client :
+Bahan :
+Os Windows 
+Openvpn client http://openvpn.net/index.php/openvpn-client.html
+
+Ramuannya :
+Download openvpn client http://openvpn.net/index.php/openvpn-client.html
+Install dan baca secara seksama kalau kelamaan baca ya next .. next aja  hehehehe
+
+Download  ca,key dan crt yang dibuat pada server yaitu ca.crt,  Client ( client.key, client.crt ) dan client2 ( client2.key, client2.crt )
+gunakan sofware ftp client yang mendukung SFTP
+http://www.google.com/search?q=sftp+client&ie=utf-8&oe=utf-8&aq=t&rls=org.mozilla:en-US:official&client=firefox-a
+
+install dan kemudian login dengan port ssh.
+msuk ke dalam folder /etc/openvpn/keys
+donwload file client tersebut diatas (ca.crt, client.key, client.crt, client2.key, client2.crt)
+letakan file tersebut dalam folder config di file installasi openvpn client.
+
+Jalankan openvpn client.
+
+
+Selamat ber VPN.
+
+Bahan racikan :
+http://openvpn.net/
+http://www.faqs.org/docs/Linux-HOWTO/VPN-HOWTO.html
+http://id.wikipedia.org/wiki/VPN 
+http://computer.howstuffworks.com/vpn.htm
+http://www.google.com/search?q=openvpn+howto+centos&ie=utf-8&oe=utf-8&aq=t&rls=org.mozilla:en-US:official&client=firefox-a
+
+
+
+                                                                                                                                                                                                                                                                                                                                                                                              1Ÿ«z§	Î‰$ğgæ“§¿º:µúãÄ€’Ò¡²ğ›N¯ÛÍŠ³ıxrè5A¤¤+ó*'æ\	ƒ*M?[’„ûÂbn5ö1Êš¿‡Ìsjˆ‘É¥ˆú¸Ê/Ç"K4ô?÷À )k8%øòªƒübxˆZ",ísõD¹÷…øe	plšıµlÅ®‘NŒ˜iĞì}Î<ƒäzûÛDŠ°˜ÕïUªµ]I"[¨‰õêÑ™¶¾ÔcÃ$àĞï©·JøÈ¢¶)=ª VòMö~NAû>l–xéQ€å³İt'õÏıô~½nB|)É‘Bb+óÃøô³8ánØ#½¢ıÒê¨JßS•–¯Eß 	¯÷uÌ]Ö 
+¼mnV|­¡eev‘AƒWsö]¹ÙIæ¯W³\<ıL[MX’íÈÿª³,FY˜øh­âc“Õ‹µUàíŸ²³?ÅÙá%¨C'*ãw¶l®œ®u&½ïâÙÄf&àN+Nì¤;ÿÕ¿™`s‚ÄdYXöíÓ9‚±1ê¡gfßÀAJÎVÓ\ãğ	S[…€LÈÜGQ¾ÇÔ è'®Â$¬"O ¡kn@ğ_Ï7`£¿,îUë^2qI\WEÂ-Çªb_âuª3Ğ[Şız}ãƒî«Ÿ…Í¥ë6àƒPçüNlöÊa2Ş#¿rÃGÄ9‰Bk&
+ñ"‚ÎÖ)Op;F:A¥ˆ®ösÌ]×–€Ë×ùµNñÚÿÂõ.ÇõŸ–JêTşç«¬Îvıq+á–*~´Ô”\M]Š3wÕÀyfœá±+›Œ»cÊC¸K¤=Ñ…8ïßµ‰Ë£±r:.¿Ç÷©“¬¯ï²ƒ°ò×ÅÒïsjw }5X·x-ÊùpöêÖÅ [t«®%F4æ\ĞÈQdÏß&¯
+X˜oĞ<m¦Q.4\{¡i’á1ÁÿA)5«wÔøÅGĞ´—h%–ô9¹:¤ÿ6‚Ò[âR’ü“Ud‰SœÓ0ô`¤V»ò›!yÂµ«ùV‰`{Ïä"&e(²ıo\9DtvíÒ·ì¢XùìY©@vAÒíHÀV^8£vÓİLG¢@†zµo¬N!=N›YÈ()%œÜb…j ócúÖCä«B×è¸ £gç{Z¡®Dï§J£ÍfßXûÛòÂQàa™Ÿ“ØØdCœÖĞÿAquèaMX8eÖ<PİM´iƒM}o­ùEÛªNßLN†ØÔÁ`mf¹t±÷]¤Œa·'–nŸë uú8Æ±£fMŞÃ¥‚‰-˜+~"4-²5e)¿[¢HÄšaOú’	º/;ÈÇñEh?h€Zï’s®rÚSO¥"ºÉ­Ö¤öä¯Ú»XêÛ”‰€ùµU»âyÏ˜ĞdTQØ…„/ï¼¥*êİ7ÊœBù†ˆ„Ø¹`lt=ûjoÈµqÃmZ1ˆO“¹O?"™ÁKÇ ©·L<ıú¢ÔpŠûJøî*8Amíº³Sæ[‘m¹ŠÜÓˆ’BŸ’FM‚*.Nr&b»ƒ ¨ï/ĞÁ…ıÌ	Ú¾¯éZ >32¼õ%ß½¥ì_@„;)¤2ÏYÇ£"¿|¦;Ñyú9À&Ç*€”ÖIèÆ\šñÊ;ÂÒdÕËı™hh­•¦—÷©¾uŒ+ s·í(\õƒBzşà†MlÛ!#çİàš’f²Ÿ_1ÆŞŸCÂˆoÍ]:¸×	U@ÿhÕçw£, á8‡«üìÊkHşÈÀ’ú¢nÔéõ•j¦î“Èq±Œæ·w]ŠD_*%,\|GŠ™Î@Û“Âœ›*´Qâæ%’½§P'rÁŠz¤³fLğ<’â=§ÇŠÄ”>GuèIâ?7«i°¯O˜ßjvØNF»uÎì¥êÎ_è|Tş õB1F³Ù p[Ont´­sœúny%äÔ`Ï	“›ùÙÏ/ı; öû/®;PeÀ	M8^&½ï*]¼†I-ü8³¯Ò½Kct‹²-
+f]fzŸàA((9VŠk!dT fCËÍûVªòÖùúgüEfÙrr;9—‘—© Õ]2SÜ u…×îxiö-ÓéŞ¾gû¸ËØ¼—r›zÓç•Xö(u¿dÒ»Şƒ3P;é©šªF‚ê_ç`A¬6õI+A®¡0ç<*nQ,i@3ˆt~?
+b4Væ5*Hók%q>K•jùGëê95ç	4«÷Iº¸/xäág#Yí6|
+‘òåÎÏšªa,há)ş¾šÔ]çµÈšÚ£™Oâ¾2lRæŠÉ‡K9˜şfÅàÏÊ‡®ÒÂÎx^uí\¢“•20Ûá@/&"¡İ²±@Eukîœ·¤®-­îø™ ¿%JËQ×$¼Éqÿœ]Í”@¢wanúD3w«×¨Ãğ”õ¼’“t1D·UÏ®Ü¡*k¯ìh˜tã~Æ’õòìJ.[nYÑØÉŠœ””¾¶+ ÎËaÁ¾¥‘çAÌ
+x[Î˜ìögßxÜ´ñ1¦`šœ:Işş7!ñ’Sƒœ¼(I§¢¢“›ÊáG½j½ñº|‘Ëµ3åÓÏwÚƒ}\´í½L™á™¿äz“‹4½ŸfoãşÒC££Ä.\ãÁ£pOÑñ/9Ì‹é¼Kg$\zÈ='ëin‹¾ø?‹sïF:êqB;áï†-¯	šjŸjÔE5àk¤E4ĞŠ¡HËbÊ[c¢j¥ğwùÅÛ„ø/p  ¡‰Ë'¸(ü!Ú-öâ£uïHëµpğÈè»P8ºv²<7Ôw8¼ALØ1gH/ÔâtrÁÀL¢ÙS^ã/`ş:{ÕÚiü/(9¿$§£ªCY?ªtÆN;J¨ïÙv»8•4O^®V– pX†Kğô5·ÁÃ*%0îÙÊ‚V{çgGn¥ 2öU¥Û6Û÷²r%jŒW]$á|ƒÎT¢|ÁÆj††ŒZdGg[Îdàq>Ğ³Ë†*Üş¯Ê(à1& êx G¢YTŸßêÁœq
+ş¼ØoĞ‰ìNL\[‡¿½Aæ©TW&ÍÔÛ™©ÔnvĞühÌfp¡†Ú*©€›JºŒÿ¥_§¦ÔÀ\‘¨ğ	µ”w«ÜÃA1ÍòFårşÑ†?•0š9Eªd–ûC’(¡Óò>Óº@*¿+L€še£<"q“ÅÄÃÛ¤ÉºÒŞÕıÆhXü>½G·]Åïz,bóù=È€êÖ¯«ò™ï‚u£¼»`DùŞ°Ÿs‡éŒê˜ÿÃN!ñëäÜœÁRt=ë¿dui!Ë„h€fÚLçáe›ÉïY1à	ÊO3= ™k³•ïñ—àzÅíB›Ç¡æG^«½E§»ßJe«†ÁYm(ç‡±—_wßœÁ2$¹w=a%(ä!ÁİÇ@¦á-øÜ$¼»’¨ğB(İDz»ëuì—Â[È y€9¾õ•òŞ) 6¬•2\Ôñ& ßëÖnZÂê/DóbXz?.©)ÿ´êìÍgúfâTG<zƒFİSÙoi¹Q9¿…tj0"“Ìâ‚÷™4Ş¦Ÿ‹RŸïZÀy-enÑÕ.òÇû.ÎGÕ åùÀ›0 è£ñÊÖ Tƒän Œâ½ÌŠ”ÑEpqÎ[†;ã-j"²OSòh^{ÒOÈQ´ĞËJİâW°«ĞÀ³ÌÁ%1<ä+º?	€,— 
+pm÷¥-Ã±WÖk×mØæ=ß½÷ÂD+ìE™ieØ)å"#àïG’Íu\‰pVƒ Ê²àÂï9·ÿrë¼ŠŞ‹Ğ~õò^!´úóß7uUXºàuñ©Nƒ"?Ù÷óc™#KÊù¨µÇ\4ñ¨s
+Ê¸°CÃÔgæùd5'h£S2–$7zå^ÊÒ(6±(}¿a,={ËzÅ5Zt ¡±³õp–Ã$iÙ4UınI±²s9³XnïàO§1C‰#–Ò|=‘5šDX«,¿ÚûañĞ‡¨·,HQF_Àêw¤â‰ICÉ°…oR¼ØŸkÇ·t?‘¦¸ş A—rtE…Oz.5Ösœ ó¹N§ùÓæÑ!gq€ç€_T†ëù×Q®¼,ğç`¿¿†´ñ(piÙÛâß0.ü,Å¼E­ïİªM.l£Ë[cİ^-¥Rÿ°[iìğ#rùUk"Äù¿EæG?
+¬c2õƒã9êµŠ-`|	3ozô-@€Ÿ²6¨•çü¤!Œ6í8T Ö³ÌFŒLç6Õ¢­¯=ƒ\ŸöÆG†?¹Ì¤=¹µ2Â®‘1ğ?/™´lŸYP‚ÏÜbÎp"€tÁáI©™ˆÄıMş­í,-¼ó
+™©UüX’vy.ŸjÁÕÑ¶m–Wd~fl
+šÏàŸ„¶Î·};I(Â2 ±#B<¼^’A„Éx3«²€óG úêU¶P×y×§Äm=£şÌw.±–Îq\jÃØ¼ÑşFèDCğ ·bé(j%ePğèó™£Ñä€/=.ï¤:P*r¤Í5ÕºÌGIí [is‘T´bãˆñıºw<·¿ÖÙ¶Dnh=èáq®;®%n

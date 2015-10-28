@@ -1,0 +1,29 @@
+beberapa minggu ini email spam semakin banyak yang masuk ke mail box, dan yang bikin kesel lagi dia pake alamat email kita  sendiri untuk mengirim email spam ke mail box kita. misal dari gue @gue.web.id mengirimkan spam ke email gue @gue.web.id juga. bagi orang awam ini sangat membingungkan. Gak merasa kirim email tapi kok ada kiriman email.
+
+Fake email seperti itu tidak lah sulit hanya memalsukan header email from to maka sangat mungkin orang lain atau spammer bisa meminjam alamat email seseorang.
+
+Langsung saja bagaimana cara memblok email tersebut.
+
+Ada harus mempunya contoh email yang anda anggap spam. Dari email spam tersebut bisanya banyak kata atau kalimat yang sama  pada setiap email yang di kirim. Kita ambil salah satu kata dari body email tersebut yang mempunyai kalimat "Special Offers by email" anda bisa mengambil kata lain nya sesuai keingin anda.
+Contoh email spam
+
+Login ke contol panel (Cpanel) hosting anda.
+1. Pada menu <b>Mail</b> Klik "link Account Level Filtering"
+2. Klik tombol Create a new Filter
+3. Pada filter yang akan kita buat :
+	1. isikan "filter name " isikan sesuai nama filternya agak kalau anda membuat banyak filter akan tidak sulit mencarinya bila di perlukan.
+	2. Rules
+		box (a) Pilih "Body" karena hanya pada body email yang akan di filter.
+		box (b) pilih "contains" kerena hanya yang mengandung kata/kalimat tersebut yang akan di filter.
+		box (c) isi dari filter yang ada di body email dalam hal ini di isikan "Special Offers by email"
+	3. Actions 
+		box (a) Isikan pilihan tindakan yang akan di ambil bila ingin langsung di buang pilih "Discard Message". dalam contoh ini saya memforward email yang tertangkap ke email khusus dengan memilih "Redirect to email" dan mengisikan alamat email pada box (b)
+4. Klik tombol Activated 
+
+5. Lakukan Filter Test untuk meyakinkan apakah filter yang dibuat berfungsi atau tidak. Ketikkan "Special Offers by email" kemudian klik Test Filter.
+6. Bila Filter berjalan maka akan terlihat seperti berikut:
+
+Filter email-email lain yang di anggap spam seprti langakh-langkah di atas.
+Selamat berperang dengan spam.
+
+		

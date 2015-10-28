@@ -1,0 +1,39 @@
+Jenis-jenis VPN yang tersedia di Linux
+
+Virtual Private Networks, atau VPN, adalah cara aman mengakses sumber daya pada jaringan Anda dari titik yang tidak dipercaya di internet. Disini dijelaskan beberapa dari berbagai jenis  solusi VPN open-source yang tersedia pada sistem Linux, dengan kelebihan dan kekurangannya untuk setiap solusi. Saya tidak membuat perbandingan VPN, tapi saya berharap saya memberikan informasi yang cukup bahwa Anda dapat menarik kesimpulan sendiri, dan membuat keputusan pada jenis VPN yang terbaik sesuai kebutuhan anda. 
+
+
+IPSec VPNs (Openswan, KAME) 
+
+IPSec adalah salah satu standar VPN tertua, dan masih sangat aman dan berguna bila dikonfigurasi dengan benar. Ada dua implementasi utama yang terpisah pada IPSec di Linux. 
+The first is the project that was originally called FreeS/WAN, but has now forked into Openswan and Strongswan . 
+Yang pertama adalah proyek yang awalnya disebut membebaskan / WAN, namun kini telah bercabang menjadi Openswan dan Strongswan . This implementation provides its own IPSec kernel stack, and it can also use the code included in recent kernels. Implementasi ini menyediakan kernel sendiri IPSec nya stack, dan juga dapat menggunakan kode yang disertakan dalam kernel baru-baru ini. The second is a port of KAME from BSD. Yang kedua adalah pelabuhan KAME dari BSD. KAME can only use the kernel stack. KAME hanya dapat menggunakan kernel stack. The main IPSec specification itself does not provide a virtual IP for the remote host on the local network, but there are various extensions that offer this. Spesifikasi IPSec utama itu sendiri tidak menyediakan IP virtual untuk remote host di jaringan lokal, tetapi ada berbagai ekstensi yang menawarkan ini. You can also run L2TP over IPSec, which is well supported by Microsoft's recent operating systems. Anda juga dapat menjalankan L2TP atas IPSec, yang didukung oleh sistem operasi terbaru Microsoft.
+
+Pros: IPSec is a very established protocol, and is well supported by pretty much anything that supports VPN connections (routers, smartphones, operating systems, you name it!) The Openswan implementation works with the proprietary XAUTH extension, and can work as a client to Cisco, Nortel, and many other VPN concentrators. Kelebihan: IPSec adalah protokol didirikan sangat, dan ini didukung oleh banyak hal cantik yang mendukung koneksi VPN bekerja dengan kepemilikan xauth ekstensi, dan dapat bekerja sebagai klien (, router smartphone, operasi Anda, sistem nama itu!) Pelaksanaan Openswan untuk Cisco, Nortel, dan banyak lainnya konsentrator VPN. IPSec makes it reasonably easy to secure what can and cannot go over a tunnel, at the kernel level, without having to set up extra firewall rules. IPSec membuatnya cukup mudah untuk mengamankan apa yang bisa dan tidak bisa pergi ke sebuah terowongan, pada level kernel, tanpa harus membuat aturan firewall tambahan. Very flexible for subnet<->subnet configurations, host<->subnet configurations, and so on. Sangat fleksibel untuk subnet <-> konfigurasi subnet, host <-> konfigurasi subnet, dan sebagainya.
+
+Cons: IPSec can be difficult to get set up and working. Cons: IPSec bisa sulit untuk mengatur dan bekerja. It also does not work behind some types of NAT gateways, although this has improved with NAT-Traversal support. Ini juga tidak bekerja di balik beberapa jenis gateway NAT, walaupun ini telah ditingkatkan dengan dukungan NAT-traversal.
+
+Links: Link:
+
+Openswan Openswan
+IPSec-tools, KAME port for Linux IPSec-tools, KAME port untuk Linux
+My article on configuring Openswan with X.509 and Windows XP's client Saya artikel tentang konfigurasi Openswan dengan X.509 dan klien Windows XP
+My article on configuring Openswan with L2TP and Windows XP's client Saya artikel tentang konfigurasi Openswan dengan L2TP dan klien Windows XP
+Consulting information, if you need help informasi Consulting, jika Anda membutuhkan bantuan
+
+SSL-Based VPNs (OpenVPN) SSL Berbasis VPN (OpenVPN)
+
+Recently, SSL-based VPN have been gaining popularity. Baru-baru ini, SSL VPN berbasis telah mendapatkan popularitas. The big benefit to SSL VPN's is that you only require a single TCP or UDP port to tunnel your traffic on, so you can easily traverse most firewalls. Manfaat besar untuk SSL VPN adalah bahwa Anda hanya memerlukan TCP tunggal atau port UDP ke terowongan lalu lintas Anda, sehingga Anda dapat firewall paling mudah dilewati. There are many implementations of SSL VPN's; many of them are commercial, and support both a web-based interface (which only allows you to browse web pages on the remote network, but works on any browser on any platform.. it is essentially a browser-based proxy server) and a full tunneled implementation. Ada banyak implementasi SSL VPN, banyak dari mereka yang komersial, dan mendukung kedua antarmuka berbasis web (yang hanya memungkinkan Anda untuk menjelajah halaman web pada jaringan remote, tetapi bekerja pada browser apapun pada platform apapun .. itu pada dasarnya adalah berbasis browser proxy server), dan sebuah implementasi terowongan penuh. As far as open source implementations go, the most mature by far is OpenVPN . Sejauh implementasi open source pergi, yang paling matang sejauh ini adalah OpenVPN . OpenVPN is fairly mature, very feature-rich, and has been ported to most major operating systems. OpenVPN cukup matang, sangat kaya fitur, dan telah porting ke sistem operasi yang paling utama. As of yet, there is not a “clientless” (ie, web-browser-based) version available that I am aware of. Seperti yang belum, tidak ada "clientless" (yaitu, web-browser-based) versi yang tersedia bahwa saya sadar.
+
+Pros: Trivial firewall configuration; just needs a single TCP or UDP port. Kelebihan: konfigurasi firewall Trivial, cukup membutuhkan satu TCP atau UDP port. Uses SSL, which is a very mature protocol. Menggunakan SSL, yang merupakan protokol yang sangat matang. Available for most operating systems, including Windows. Tersedia untuk sebagian besar sistem operasi, termasuk Windows. Flexible configuration options. Pilihan konfigurasi yang fleksibel.
+
+Cons: Requires more firewall configuration that IPSec to control access to internal resources. Cons: Membutuhkan lebih firewall konfigurasi yang IPSec untuk mengontrol akses ke sumber daya internal. OpenVPN is not supported in most commercial VPN concentrators; however, they usually provide their own implementation. OpenVPN tidak didukung dalam konsentrator VPN yang paling komersial, namun mereka biasanya menyediakan implementasi mereka sendiri. 
+
+Link:
+http://www.openvpn.net/
+
+PPTP Berbasis VPN (PoPToP)
+
+PPTP is the protocol that Microsoft originally supported somewhere around Windows 95. PPTP merupakan protokol yang awalnya didukung Microsoft di sekitar Windows 95. It's been used for a long time, but there are many questions about the security of it. Ini telah digunakan untuk waktu yang lama, tetapi ada banyak pertanyaan mengenai keamanan itu. Basically it tunnels a PPP connection over the GRE protocol. Pada dasarnya terowongan koneksi PPP over protokol GRE. PoPToP is the main PPTP server for Linux. PoPToP adalah server PPTP utama untuk Linux. If you think you need PPTP, I would highly advise you to look at L2TP over IPSec instead — L2TP over IPSec is more secure, offers all the same features, plus a few extras. Jika Anda pikir Anda membutuhkan PPTP, saya akan sangat menyarankan Anda untuk melihat lebih IPSec L2TP bukannya - L2TP lebih IPSec lebih aman, menawarkan semua fitur yang sama, ditambah beberapa tambahan.
+
+Pros: Easy configuration under Windows, supported by many commercial routers/firewalls. Kelebihan: M

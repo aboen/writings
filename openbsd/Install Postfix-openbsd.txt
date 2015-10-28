@@ -1,0 +1,252 @@
+Install Lewat Ports
+$ cd /usr/ports/mail/postfix/stable
+$ sudo env FLAVOR="sasl2 ldap mysql" make install
+
+===>  Building package for postfix-2.5.1p0-sasl2-ldap-mysql
+Create /usr/ports/packages/i386/all/postfix-2.5.1p0-sasl2-ldap-mysql.tgz
+Link to /usr/ports/packages/i386/ftp/postfix-2.5.1p0-sasl2-ldap-mysql.tgz
+===>  Verifying specs: pcre sasl2 ldap.>=2 lber lib/mysql/mysqlclient.>=10 c crypto ssl
+===>  found pcre.2.1 sasl2.2.22 ldap.9.1 lber.9.1 lib/mysql/mysqlclient.18.0 c.43.0 crypto.13.0 ssl.11.0
+===>  Installing postfix-2.5.1p0-sasl2-ldap-mysql from /usr/ports/packages/i386/all/
+postfix-2.5.1p0-sasl2-ldap-mysql: complete
+--- postfix-2.5.1p0-sasl2-ldap-mysql -------------------
+-> Creating /etc/mailer.conf.postfix
+-> Creating Postfix spool directory and chroot area under /var/spool/postfix
+-> Creating Postfix data directory under /var/postfix
+
+
++---------------
+| The existing configuration files in /etc/postfix have been preserved.
+| You may want to compare them to the current sample files,
+| /usr/local/share/examples/postfix, and update your configuration as needed.
+|
+| /etc/postfix/post{fix-{script,files},-install} has been updated.
++---------------
+
+Postfix can be set up to replace sendmail entirely. Please read the
+documentation at file:/usr/local/share/doc/postfix/html/index.html or
+http://www.postfix.org/ carefully before you decide to do this!
+
+To replace sendmail with postfix you have to install a new mailer.conf
+using the following command:
+
+    /usr/local/sbin/postfix-enable
+
+If you want to restore sendmail, this is done using the following command:
+
+    /usr/local/sbin/postfix-disable
+
+
+
+$ sudo /usr/local/sbin/postfix-enable
+old /etc/mailer.conf saved as /etc/mailer.conf.pre-postfix
+postfix /etc/mailer.conf enabled
+
+NOTE: do not forget to add sendmail_flags="-bd" to
+      /etc/rc.conf.local to startup postfix correctly.
+
+NOTE: do not forget to add "-a /var/spool/postfix/dev/log" to
+      syslogd_flags in /etc/rc.conf.local and restart syslogd.
+
+NOTE: do not forget to remove the "sendmail clientmqueue runner"
+      from root's crontab.
+
+
+dl postif admin
+dan buat data base
+harus  sudah tersinstall install php5-mbstring dan php5-imap
+
+$ sudo wget http://internode.dl.sourceforge.net/sourceforge/postfixadmin/postfixadmin-2.2.1.1.tar.gz
+$ sudo tar zxvf postfixadmin-2.2.1.1.tar.gz
+$ mv postfixadmin-2.2.1.1 postfixadmin
+
+Baca file INSTALL.TXT
+buat data user mysql degan nama postfix
+ 
+$ mysql -u root -p
+Enter password:
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 11
+Server version: 5.0.51a-log OpenBSD port: mysql-server-5.0.51a
+
+Type 'help;' or '\h' for help. Type '\c' to clear the buffer.
+
+mysql> CREATE DATABASE postfix;
+Query OK, 1 row affected (0.03 sec)
+
+mysql> CREATE USER 'postfix'@'localhost' IDENTIFIED BY 'p4ssw0rd';
+Query OK, 0 rows affected (0.04 sec)
+
+mysql> GRANT ALL PRIVILEGES ON `postfix` . * TO 'postfix'@'localhost';
+Query OK, 0 rows affected (0.03 sec)
+
+juga untuk 127.0.0.1
+mysql> CREATE USER 'postfix'@'127.0.0.1' IDENTIFIED BY 'p4ssw0rd';
+Query OK, 0 rows affected (0.02 sec)
+
+mysql> GRANT ALL PRIVILEGES ON `postfix` . * TO 'postfix'@'127.0.0.1';
+Query OK, 0 rows affected (0.03 sec)
+
+
+edit file configurasi
+$ sudo vi config.inc.php
+
+ubah baris berikut
+$CONF['configured'] = false;
+
+to
+
+$CONF['configured'] = true;
+
+
+INSTALL COURIER IMAP dan POP3
+
+$ sudo pkg_add -v http://dl2.foss-id.web.id/openbsd/4.3/packages/i386/courier-imap-4.1.1p2.tgz
+
+courier-imap-4.1.1p2: complete
+--- courier-authlib-0.58p3 -------------------
+Sample configuration files are installed in /etc/courier/.
+--- courier-imap-4.1.1p2 -------------------
+You now need to edit appropriately the Courier-IMAP configuration files
+installed in /etc/courier/courier/.
+
+Pay particular attention to the details in imapd.cnf, and read ssl(8) if
+necessary. You MUST set the CN in imapd.cnf to the hostname by which
+your IMAP server is accessed, or else clients will complain. When this
+is done, you can use the 'mkimapdcert' script to automatically generate
+a server certificate, which is installed into /etc/ssl/private/imapd.pem
+
+To control the daemon use /usr/local/libexec/imapd.rc and
+/usr/local/libexec/imapd-ssl.rc, and to run the authdaemon, place the
+following in /etc/rc.local:
+
+mkdir -p /var/run/courier{,-auth}/
+/usr/local/sbin/authdaemond start
+--- tcl-8.4.7p6 -------------------
+You may wish to add /usr/local/lib/tcl8.4/man to /etc/man.conf
+$
+
+$ sudo vi /etc/rc.local
+$ sudo vi /etc/courier/imapd.cnf
+$ sudo mkimapdcert
+Generating a 1024 bit RSA private key
+............++++++
+..........................++++++
+writing new private key to '/etc/ssl/private/imapd.pem'
+-----
+512 semi-random bytes loaded
+Generating DH parameters, 512 bit long safe prime, generator 2
+This is going to take a long time
+..............................+.....................+..........+..........+..+..........................+.+....+..............................+........+.......+.........+..+...................+..+..............+..........+...+.......+..........+..........+....+....+.+.......+............+.........+.........................+..............+.............................+.......+....+..............................+.+.................+.........................+.......................+.....................+............................................+.......+..+......+........................+..........................................................................+....................+......................................+..........................+..............................+........................................+..............+.+................................+..............................+..........+...........+...................+.........................................++*++*++*++*++*++*
+subject= /C=ID/ST=JKT/L=DKI Jakarta/O=Courier Mail Server/OU=Automatically-generated IMAP SSL key/CN=localhost/emailAddress=postmaster@localhost
+notBefore=Nov 26 10:22:03 2008 GMT
+notAfter=Nov 26 10:22:03 2009 GMT
+MD5 Fingerprint=BB:40:15:C0:05:EE:29:73:E5:C2:7C:D2:16:E8:83:D5
+$ sudo vi /etc/courier/imapd
+dan ubah baris berikut IMAPDSTART=NO menjadi IMAPDSTART=YES
+
+POP3
+$ sudo pkg_add -v http://dl2.foss-id.web.id/openbsd/4.3/packages/i386/courier-pop3-4.1.1p0.tgz
+parsing http://dl2.foss-id.web.id/openbsd/4.3/packages/i386/courier-pop3-4.1.1p0.tgz
+Dependencies for courier-pop3-4.1.1p0 resolve to: courier-authlib-0.58p3
+found libspec c.43.0 in /usr/lib
+found libspec courierauth.0.0 in package courier-authlib-0.58p3
+found libspec courierauthsasl.0.0 in package courier-authlib-0.58p3
+adding group _courier
+adding user _courier
+installed /etc/courier/pop3d-ssl from /usr/local/share/examples/courier/pop3d-ssl.dist*********************     | 95%
+installed /etc/courier/pop3d.cnf from /usr/local/share/examples/courier/pop3d.cnf***************************    | 95%
+installed /etc/courier/pop3d from /usr/local/share/examples/courier/pop3d.dist**********************************| 100%
+courier-pop3-4.1.1p0: complete
+--- courier-pop3-4.1.1p0 -------------------
+You now need to edit appropriately the Courier-POP3 configuration files
+installed in /etc/courier/courier/.
+
+To use POP3-SSL, be sure to read ssl(8) and run the mkpop3dcert script
+if you require a self-signed certificate.
+
+To control the daemon use /usr/local/libexec/pop3.rc and
+/usr/local/libexec/pop3-ssl.rc.
+
+$ sudo vi /etc/courier/pop3d.cnf
+$ sudo mkpop3dcert
+$ sudo vi /etc/courier/pop3d
+dan ubah baris berikut POP3DSTART=NO menjadi POP3DSTART=YES
+
+
+$ sudo pkg_add -v http://dl2.foss-id.web.id/openbsd/4.3/packages/i386/courier-authlib-mysql-0.58p1.tgz
+$ ls /etc/courier
+authdaemonrc  imapd         imapd.cnf     pop3d-ssl     quotawarnmsg  shared.tmp
+authmysqlrc   imapd-ssl     pop3d         pop3d.cnf     shared
+$ sudo vi /etc/courier/authmysqlrc
+$ sudo vi /etc/rc.local
+tambhakan baris berikut;
+#COURIER
+mkdir -p /var/run/courier{,-auth}/
+/usr/local/sbin/authdaemond start
+
+/usr/local/libexec/imapd.rc start
+/usr/local/libexec/imapd-ssl.rc
+/usr/local/libexec/pop3.rc
+/usr/local/libexec/pop3-ssl.rc
+
+
+GRAYLIST POSTFIX
+$ sudo cp /usr/ports/mail/postfix/stable/w-postfix-2.5.1p0-sasl2-ldap-mysql/postfix-2.5.1/examples/smtpd-policy/greylist.pl \
+	/usr/local/libexec/postfix/
+
+AMAVISD-NEW
+$ cd /usr/ports/mail/amavisd-new
+$ sudo make install clean
+===>  Checking files for amavisd-new-2.5.3
+>> amavisd-new-2.5.3.tar.gz doesn't seem to exist on this system.
+>> Fetch http://www.ijs.si/software/amavisd/amavisd-new-2.5.3.tar.gz.
+  3% |**                                                                                             | 28672       03:05 ETA
+
+--- amavisd-new-2.5.3 -------------------
+Enable amavisd-new in /etc/rc.local with the following lines:
+
+if [ -x /usr/local/sbin/amavisd ]; then
+        echo -n ' amavisd'; /usr/local/sbin/amavisd
+fi
+===>  Cleaning for amavisd-new-2.5.3
+
+
+
+Install ANTIVIRUS dan SPAM
+INSTAL CLAMAV FROM SOURCE
+DL clamav terbaru
+$ ./configure  --sysconfdir=/etc --with-user=_clamav --with-group=_clamav
+$ sudo make install clean
+
+$ cd /etc
+$ sudo vi clamd.conf
+edit bagian berikut menjadi seperti ini :
+=====
+
+# Comment or remove the line below.
+#Example
+#
+LogFile /tmp/clamd.log
+PidFile /var/run/clamd/clamd.pid
+LocalSocket /var/amavisd/clamd.sock
+
+===========
+Edit freshclam.conf
+$ sudo vi freshclam.conf
+edit menjadi seprti berikut :
+======
+
+# Comment or remove the line below.
+#Example
+UpdateLogFile /var/log/freshclam.log
+LogTime yes
+PidFile /var/run/clamd/freshclam.pid
+DatabaseOwner _clamav
+DatabaseMirror db.id.clamav.net
+
+==========
+
+
+
+

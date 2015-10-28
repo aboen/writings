@@ -1,0 +1,178 @@
+Open LDAP INSTALL
+http://www.kernel-panic.it/openbsd/pdc/pdc2.html
+
+$ sudo pkg_add -v http://openbsd.biz.net.id/pub/4.3/packages/i386/openldap-server-2.3.39p0.tgz
+parsing http://openbsd.biz.net.id/pub/4.3/packages/i386/openldap-server-2.3.39p0.tgz
+Dependencies for openldap-server-2.3.39p0 resolve to: openldap-client-2.3.39, cyrus-sasl-2.1.22p2 (todo: openldap-client-2.3.39,cyrus-sasl-2.1.22p2)
+openldap-server-2.3.39p0:parsing openldap-client-2.3.39
+Dependencies for openldap-client-2.3.39 resolve to: cyrus-sasl-2.1.22p2 (todo: cyrus-sasl-2.1.22p2)
+openldap-server-2.3.39p0:parsing cyrus-sasl-2.1.22p2
+found libspec asn1.16.0 in /usr/lib
+found libspec c.43.0 in /usr/lib
+found libspec com_err.16.0 in /usr/lib
+found libspec crypto.13.0 in /usr/lib
+found libspec gssapi.5.0 in /usr/lib
+found libspec krb5.16.0 in /usr/lib
+openldap-server-2.3.39p0:cyrus-sasl-2.1.22p2: complete
+found libspec asn1.16.0 in /usr/lib
+found libspec c.43.0 in /usr/lib
+found libspec com_err.16.0 in /usr/lib
+found libspec crypto.13.0 in /usr/lib
+found libspec gssapi.5.0 in /usr/lib
+found libspec krb5.16.0 in /usr/lib
+found libspec sasl2.2.22 in package cyrus-sasl-2.1.22p2
+found libspec ssl.11.0 in /usr/lib
+installed /etc/openldap/ldap.conf from /usr/local/share/examples/openldap/ldap.conf******************************              | 82%
+openldap-server-2.3.39p0:openldap-client-2.3.39: complete
+found libspec asn1.16.0 in /usr/lib
+found libspec c.43.0 in /usr/lib
+found libspec com_err.16.0 in /usr/lib
+found libspec crypto.13.0 in /usr/lib
+found libspec gssapi.5.0 in /usr/lib
+found libspec krb5.16.0 in /usr/lib
+found libspec m.2.3 in /usr/lib
+found libspec perl.10.1 in /usr/lib
+found libspec pthread.9.0 in /usr/lib
+found libspec sasl2.2.22 in package cyrus-sasl-2.1.22p2
+found libspec ssl.11.0 in /usr/lib
+found libspec util.11.0 in /usr/lib
+found libspec wrap.4.0 in /usr/lib
+adding group _openldap
+adding user _openldap
+installed /etc/openldap/schema/corba.schema from /usr/local/share/examples/openldap/schema/corba.schema****************        | 93%
+installed /etc/openldap/schema/core.schema from /usr/local/share/examples/openldap/schema/core.schema*******************       | 94%
+installed /etc/openldap/schema/cosine.schema from /usr/local/share/examples/openldap/schema/cosine.schema*******************   | 97%
+installed /etc/openldap/schema/dyngroup.schema from /usr/local/share/examples/openldap/schema/dyngroup.schema
+installed /etc/openldap/schema/inetorgperson.schema from /usr/local/share/examples/openldap/schema/inetorgperson.schema******  | 98%
+installed /etc/openldap/schema/java.schema from /usr/local/share/examples/openldap/schema/java.schema
+installed /etc/openldap/schema/misc.schema from /usr/local/share/examples/openldap/schema/misc.schema
+installed /etc/openldap/schema/nis.schema from /usr/local/share/examples/openldap/schema/nis.schema*************************** | 99%
+installed /etc/openldap/schema/openldap.schema from /usr/local/share/examples/openldap/schema/openldap.schema
+installed /etc/openldap/schema/ppolicy.schema from /usr/local/share/examples/openldap/schema/ppolicy.schema********************| 100%
+installed /etc/openldap/slapd.conf from /usr/local/share/examples/openldap/slapd.conf
+installed /var/openldap-data/DB_CONFIG from /usr/local/share/examples/openldap/DB_CONFIG
+openldap-server-2.3.39p0: complete
+--- openldap-server-2.3.39p0 -------------------
+To start slapd, configure it in /etc/openldap/slapd.conf then add
+the following line to /etc/rc.conf.local:
+
+slapd_flags="-u _openldap"
+
+and to /etc/rc.local (be sure to start it _before_ any daemon that may
+need it):
+
+if [ "$slapd_flags" != "NO" -a -x /usr/local/libexec/slapd ]; then
+    install -d -o _openldap /var/run/openldap
+    /usr/local/libexec/slapd $slapd_flags
+    echo -n ' slapd'
+fi
+$
+
+$ sudo pkg_add -v http://openbsd.biz.net.id/pub/4.3/packages/i386/openldap-client-2.3.39.tgz
+parsing http://openbsd.biz.net.id/pub/4.3/packages/i386/openldap-client-2.3.39.tgz
+
+$ cd /etc/openldap
+$ ls
+ldap.conf  schema     slapd.conf
+$ sudo vi ldap.conf
+#----- isi ----
+# URI of the LDAP server to which the LDAP library should connect
+URI             ldap://motorent.co.id
+# The default base DN to use when performing LDAP operations
+BASE            dc=motorent,dc=co, dc=id
+
+# Size limit to use when performing searches
+SIZELIMIT       12
+# Time limit to use when performing searches
+TIMELIMIT       15
+# Never derefernce aliases
+DEREF           never
+#----- ||--------
+
+buat password rootpw
+$ sudo slappasswd
+New password:
+Re-enter new password:
+{SSHA}5qeiynsT08kTkc3SYus+chV5jrTqy/AI
+
+
+$ sudo vi slapd.conf
+#------ ISI --------
+# Include the necessary schema files. core.schema is required by default, the
+# other ones are needed for sambaSamAccount. The samba.schema file can be found
+# here and must be copied in /etc/openldap/schema/.
+include         /etc/openldap/schema/core.schema
+include         /etc/openldap/schema/cosine.schema
+include         /etc/openldap/schema/inetorgperson.schema
+include         /etc/openldap/schema/nis.schema
+include         /etc/openldap/schema/samba.schema
+
+# Absolute path to the PID file
+pidfile         /var/run/openldap/slapd.pid
+# Absolute path to the file that will hold slapd's command line options
+argsfile        /var/run/openldap/slapd.args
+
+# Type of database backend
+database        ldbm
+# DN suffix of queries that will be passed to this backend database
+suffix          "dc=motorent,dc=co,dc=id"
+# Database directory
+directory       /var/openldap-data
+
+# The Distinguished Name of the administrator of this database
+rootdn          "cn=Manager,dc=motorent,dc=co,dc=id"
+# Password (or password hash) for the rootdn. Clear-text passwords are allowed
+# but strongly discouraged; the password hash can be generated using the
+# slappasswd(8C) command; e.g.:
+# # slappasswd
+# New password: <password>
+# Re-enter new password: <password>
+# {SSHA}d1bjQZEA43NFKNL7g48XjaNv/W6DG0fY
+rootpw          {SSHA}5qeiynsT08kTkc3SYus+chV5jrTqy/AI
+
+# Maintain indices on the most useful attributes to speed up searches made on
+# the sambaSamAccount, posixAccount and posixGroup objectClasses
+index   objectClass             eq
+index   cn                      pres,sub,eq
+index   sn                      pres,sub,eq
+index   uid                     pres,sub,eq
+index   displayName             pres,sub,eq
+index   uidNumber               eq
+index   gidNumber               eq
+index   memberUid               eq
+index   sambaSID                eq
+index   sambaPrimaryGroupSID    eq
+index   sambaDomainName         eq
+index   default                 sub
+
+# Access control configuration. The rootdn can always read and write everything
+access to attrs=userpassword,sambaLMPassword,sambaNTPassword
+    by anonymous auth
+    by self write
+    by * none
+
+access to *
+    by self write
+    by * read
+#---------------------||-------------------------
+
+Test slapd.conf
+
+$ sudo install -d -o _openldap /var/run/openldap
+$ sudo slaptest -u
+config file testing succeeded
+
+Keliatnnya sudah ok
+karena si slapd.conf ada bersisi root password maka sebiaknya di perketet izin filenya
+$ sudo chgrp _openldap /etc/openldap/slapd.conf
+$ sudo chmod 640 /etc/openldap/slapd.conf
+
+Test jalankan slapd dengan option -d untuk debugging
+$ sudo /usr/local/libexec/slapd -4 -d 256 -u _openldap -g _openldap
+@(#) $OpenLDAP: slapd 2.3.39 (Mar 10 2008 18:07:30) $
+        @i386new.ports.openbsd.org:/usr/obj/i386/openldap-2.3.39/build-i386/servers/slapd
+WARNING: No dynamic config support for database ldbm.
+slapd starting
+
+
+Sekarang test pake ldapsearch

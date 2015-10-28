@@ -1,0 +1,300 @@
+Cara mudah install NGINX dan PHP-FPM pada centos 5.5 64bit
+
+tambahkan REPO Rusia
+# vi   /etc/yum.repos.d/rusia-repo.repo
+
+isikan dengan ini:
+------------------------------------------------------
+[rusia-repo]
+name=CentOS-$releasever . rusia packages for $basearch
+#baseurl=file:///raid/RH/CentOS/$releasever/local/$basearch
+baseurl=http://centos.alt.ru/pub/repository/centos/5/x86_64/
+enabled=1
+gpgcheck=0
+protect=1
+----------------------------------------------------------
+
+Aktifkan EPEL Repo
+EPEL (Extra Packages for Enterprise Linux) is a volunteer-based community effort from the Fedora project to create a repository of high-quality add-on packages that complement the Fedora-based Red Hat Enterprise Linux (RHEL) and its compatible spinoffs, such as CentOS and Scientific Linux. 
+
+# rpm -Uvh http://download.fedora.redhat.com/pub/epel/5/x86_64/epel-release-5-4.noarch.rpm
+
+INSTALL MYSQL
+[root@ranting ~]# yum  install mysql.x86_64 mysql-server.x86_64
+Loaded plugins: fastestmirror
+Loading mirror speeds from cached hostfile
+ * addons: mirror.as29550.net
+ * base: mirror.as29550.net
+ * epel: www.mirrorservice.org
+ * extras: mirror.as29550.net
+ * updates: mirror.as29550.net
+Excluding Packages in global exclude list
+Finished
+Setting up Install Process
+Resolving Dependencies
+--> Running transaction check
+---> Package mysql.x86_64 0:5.0.91-1.el5 set to be updated
+--> Processing Dependency: mysql-libs = 5.0.91-1.el5 for package: mysql
+--> Processing Dependency: perl(Getopt::Long) for package: mysql
+--> Processing Dependency: perl(Exporter) for package: mysql
+--> Processing Dependency: /usr/bin/perl for package: mysql
+--> Processing Dependency: libmysqlclient.so.15(libmysqlclient_15)(64bit) for package: mysql
+--> Processing Dependency: perl(Sys::Hostname) for package: mysql
+--> Processing Dependency: perl(DBI) for package: mysql
+--> Processing Dependency: perl(File::Temp) for package: mysql
+--> Processing Dependency: perl(strict) for package: mysql
+--> Processing Dependency: perl(IPC::Open3) for package: mysql
+--> Processing Dependency: perl(Fcntl) for package: mysql
+--> Processing Dependency: libmysqlclient.so.15()(64bit) for package: mysql
+---> Package mysql-server.x86_64 0:5.0.91-1.el5 set to be updated
+--> Processing Dependency: perl-DBD-MySQL for package: mysql-server
+--> Running transaction check
+---> Package mysql-libs.x86_64 0:5.0.91-1.el5 set to be updated
+---> Package perl.x86_64 4:5.8.8-32.el5_5.1 set to be updated
+---> Package perl-DBD-MySQL.x86_64 0:3.0007-2.el5 set to be updated
+---> Package perl-DBI.x86_64 0:1.52-2.el5 set to be updated
+--> Finished Dependency Resolution
+
+Dependencies Resolved
+
+=======================================================================================================================================
+ Package                           Arch                      Version                               Repository                     Size
+=======================================================================================================================================
+Installing:
+ mysql                             x86_64                    5.0.91-1.el5                          rusia-repo                    3.5 M
+ mysql-server                      x86_64                    5.0.91-1.el5                          rusia-repo                     10 M
+Installing for dependencies:
+ mysql-libs                        x86_64                    5.0.91-1.el5                          rusia-repo                    1.8 M
+ perl                              x86_64                    4:5.8.8-32.el5_5.1                    updates                        12 M
+ perl-DBD-MySQL                    x86_64                    3.0007-2.el5                          base                          148 k
+ perl-DBI                          x86_64                    1.52-2.el5                            base                          600 k
+
+Transaction Summary
+=======================================================================================================================================
+Install       6 Package(s)
+Upgrade       0 Package(s)
+
+Total download size: 29 M
+Is this ok [y/N]: y
+Downloading Packages:
+(1/6): perl-DBD-MySQL-3.0007-2.el5.x86_64.rpm                                                                   | 148 kB     00:00
+(2/6): perl-DBI-1.52-2.el5.x86_64.rpm                                                                           | 600 kB     00:00
+(3/6): mysql-libs-5.0.91-1.el5.x86_64.rpm                                                                       | 1.8 MB     00:01
+(4/6): mysql-5.0.91-1.el5.x86_64.rpm                                                                            | 3.5 MB     00:02
+(5/6): mysql-server-5.0.91-1.el5.x86_64.rpm                                                                     |  10 MB     00:06
+(6/6): perl-5.8.8-32.el5_5.1.x86_64.rpm                                                                         |  12 MB     00:03
+---------------------------------------------------------------------------------------------------------------------------------------
+Total                                                                                                  1.2 MB/s |  29 MB     00:23
+Running rpm_check_debug
+Running Transaction Test
+Finished Transaction Test
+Transaction Test Succeeded
+Running Transaction
+  Installing     : perl                                                                                                            1/6
+  Installing     : perl-DBI                                                                                                        2/6
+  Installing     : mysql-libs                                                                                                      3/6
+  Installing     : mysql                                                                                                           4/6
+  Installing     : perl-DBD-MySQL                                                                                                  5/6
+  Installing     : mysql-server                                                                                                    6/6
+
+Installed:
+  mysql.x86_64 0:5.0.91-1.el5                                    mysql-server.x86_64 0:5.0.91-1.el5
+
+Dependency Installed:
+  mysql-libs.x86_64 0:5.0.91-1.el5  perl.x86_64 4:5.8.8-32.el5_5.1  perl-DBD-MySQL.x86_64 0:3.0007-2.el5  perl-DBI.x86_64 0:1.52-2.el5
+
+Complete!
+
+SETING ROOT MYSQL Password
+
+# /etc/init.d/mysqld start
+Initializing MySQL database:  Installing MySQL system tables...
+OK
+Filling help tables...
+OK
+
+To start mysqld at boot time you have to copy
+support-files/mysql.server to the right place for your system
+
+PLEASE REMEMBER TO SET A PASSWORD FOR THE MySQL root USER !
+To do so, start the server, then issue the following commands:
+/usr/bin/mysqladmin -u root password 'new-password'
+/usr/bin/mysqladmin -u root -h domain.com password 'new-password'
+
+Alternatively you can run:
+/usr/bin/mysql_secure_installation
+
+which will also give you the option of removing the test
+databases and anonymous user created by default.  This is
+strongly recommended for production servers.
+
+See the manual for more instructions.
+
+You can start the MySQL daemon with:
+cd /usr ; /usr/bin/mysqld_safe &
+
+You can test the MySQL daemon with mysql-test-run.pl
+cd mysql-test ; perl mysql-test-run.pl
+
+Please report any problems with the /usr/bin/mysqlbug script!
+
+The latest information about MySQL is available on the web at
+http://www.mysql.com
+Support MySQL by buying support/licenses at http://shop.mysql.com
+                                                           [  OK  ]
+Starting MySQL:                                            [  OK  ]
+
+Jangan lupa untuk melakukan :
+# /usr/bin/mysqladmin -u root password 'new-password'
+# /usr/bin/mysqladmin -u root -h domain.com password 'new-password'
+
+ganti 'new-password' dengan passwod yang di inginkan
+ganti domain.com dengan host.domainanda.com
+
+
+Install NGINX dan PHP-FPM
+[root@ranting ~]# yum install nginx php-fpm
+Loaded plugins: fastestmirror
+Loading mirror speeds from cached hostfile
+ * addons: mirror.as29550.net
+ * base: mirror.as29550.net
+ * epel: www.mirrorservice.org
+ * extras: mirror.as29550.net
+ * updates: mirror.as29550.net
+Excluding Packages in global exclude list
+Finished
+Setting up Install Process
+Resolving Dependencies
+--> Running transaction check
+---> Package nginx.x86_64 0:0.8.50-1.el5 set to be updated
+---> Package php-fpm.x86_64 0:5.2.14-1.el5 set to be updated
+--> Processing Dependency: php-common = 5.2.14-1.el5 for package: php-fpm
+--> Processing Dependency: libevent-1.4.so.2()(64bit) for package: php-fpm
+--> Processing Dependency: libgmp.so.3()(64bit) for package: php-fpm
+--> Running transaction check
+---> Package gmp.x86_64 0:4.1.4-10.el5 set to be updated
+---> Package libevent.x86_64 0:1.4.13-1 set to be updated
+---> Package php-common.x86_64 0:5.2.14-1.el5 set to be updated
+--> Processing Dependency: libcurl.so.3()(64bit) for package: php-common
+--> Processing Dependency: libidn.so.11()(64bit) for package: php-common
+--> Running transaction check
+---> Package curl.x86_64 0:7.15.5-9.el5 set to be updated
+---> Package libidn.x86_64 0:0.6.5-1.1 set to be updated
+--> Finished Dependency Resolution
+
+Dependencies Resolved
+
+=======================================================================================================================================
+ Package                         Arch                        Version                             Repository                       Size
+=======================================================================================================================================
+Installing:
+ nginx                           x86_64                      0.8.50-1.el5                        rusia-repo                      440 k
+ php-fpm                         x86_64                      5.2.14-1.el5                        rusia-repo                      1.2 M
+Installing for dependencies:
+ curl                            x86_64                      7.15.5-9.el5                        base                            230 k
+ gmp                             x86_64                      4.1.4-10.el5                        base                            201 k
+ libevent                        x86_64                      1.4.13-1                            base                            112 k
+ libidn                          x86_64                      0.6.5-1.1                           base                            195 k
+ php-common                      x86_64                      5.2.14-1.el5                        rusia-repo                      276 k
+
+Transaction Summary
+=======================================================================================================================================
+Install       7 Package(s)
+Upgrade       0 Package(s)
+
+Total download size: 2.6 M
+Is this ok [y/N]: y
+Downloading Packages:
+(1/7): libevent-1.4.13-1.x86_64.rpm                                                                             | 112 kB     00:00
+(2/7): libidn-0.6.5-1.1.x86_64.rpm                                                                              | 195 kB     00:00
+(3/7): gmp-4.1.4-10.el5.x86_64.rpm                                                                              | 201 kB     00:00
+(4/7): curl-7.15.5-9.el5.x86_64.rpm                                                                             | 230 kB     00:00
+(5/7): php-common-5.2.14-1.el5.x86_64.rpm                                                                       | 276 kB     00:00
+(6/7): nginx-0.8.50-1.el5.x86_64.rpm                                                                            | 440 kB     00:00
+(7/7): php-fpm-5.2.14-1.el5.x86_64.rpm                                                                          | 1.2 MB     00:00
+---------------------------------------------------------------------------------------------------------------------------------------
+Total                                                                                                  269 kB/s | 2.6 MB     00:09
+Running rpm_check_debug
+Running Transaction Test
+Finished Transaction Test
+Transaction Test Succeeded
+Running Transaction
+  Installing     : libidn                                                                                                          1/7
+  Installing     : curl                                                                                                            2/7
+  Installing     : php-common                                                                                                      3/7
+  Installing     : libevent                                                                                                        4/7
+  Installing     : gmp                                                                                                             5/7
+  Installing     : php-fpm                                                                                                         6/7
+  Installing     : nginx                                                                                                           7/7
+
+Installed:
+  nginx.x86_64 0:0.8.50-1.el5                                       php-fpm.x86_64 0:5.2.14-1.el5
+
+Dependency Installed:
+  curl.x86_64 0:7.15.5-9.el5            gmp.x86_64 0:4.1.4-10.el5      libevent.x86_64 0:1.4.13-1      libidn.x86_64 0:0.6.5-1.1
+  php-common.x86_64 0:5.2.14-1.el5
+
+Complete!
+
+
+Install PHP Module 
+# yum install php-devel.x86_64 php-gd.x86_64 php-ioncube.x86_64 php-mbstring.x86_64 php-mcrypt.x86_64 php-mhash.x86_64 php-mysql.x86_64 php-pdo.x86_64 php_xml.x86_64 php-xmlrpc.x86_64 php-zend.x86_64
+
+test hasilnya :
+# /etc/init.d/nginx start
+Starting nginx:                                            [  OK  ]
+
+Untuk NGINX dapat mendukung php edit bagian berikut pada /etc/enginx/nginx.conf (hapus # nya)
+
+        # pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000
+        #
+        location ~ \.php$ {
+            root           html;
+            fastcgi_pass   127.0.0.1:9000;
+            fastcgi_index  index.php;
+            fastcgi_param  SCRIPT_FILENAME  /usr/share/nginx/html$fastcgi_script_name;
+            include        fastcgi_params;
+        }
+
+        # deny access to .htaccess files, if Apache's document root
+        # concurs with nginx's one
+        #
+        location ~ /\.ht {
+            deny  all;
+        }
+
+
+
+# /etc/init.d/php-fpm start
+Starting php-fpm:                                          [  OK  ]
+
+Secara default document root web serevr nginx adalah di /usr/share/nginx/html
+maka untuk test apakah PHP sudah jalan dengan mulus buat file phpinfo() pada /usr/share/nginx/html
+# cd /usr/share/nginx/html
+# vi php_info.php 
+
+isikan dengan 
+<?php phpinfo(); ?>
+
+buka browser dan arahkan ke webserver anda.
+
+bila keluar : error no input file specified.
+pastikan pada file /etc/nginx/nginx.conf
+bagian : fastcgi_param  SCRIPT_FILENAME
+
+sudah  mengarah pada :
+ fastcgi_param  SCRIPT_FILENAME  /usr/share/nginx/html$fastcgi_script_name;
+
+bagina lengkapnya :
+  # pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000
+        #
+        location ~ \.php$ {
+            root           html;
+            fastcgi_pass   127.0.0.1:9000;
+            fastcgi_index  index.php;
+            fastcgi_param  SCRIPT_FILENAME  /usr/share/nginx/html$fastcgi_script_name;
+            fastcgi_read_timeout 180;
+            include        fastcgi_params;
+        }
+
+Anda tinggal melakukan seting-seting sesuai kebutuhan  tapi secara default konfigurasi seharusnya sudah jalan.
