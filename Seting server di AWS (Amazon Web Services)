@@ -1,0 +1,43 @@
+Seting server di AWS (Amazon Web Services)
+Ada kebutuhan dari kantor untuk menggunakan service dari Amazon virtual server cloud.
+
+Kebutuhannya :
+	Berbasis MS Windows.
+	Aplikasi berbasis Client - Server. 
+	Digunakan hanya pada jam kantor.
+	User/Client menggunakan koneksi internet masing-masing dari PC/Laptop untuk mengakses aplikasi tersebut.
+
+Kelemahan :
+	Layanan AWS untuk server (EC2 atau VPC) biayanya dihitung perjam.
+
+Berdasarkan kebutuhan servernya tidak digunakan 24 jam paling maksimal 10 jam (Senin-Jumat), Sabtu-Minggu tidak digunakan.
+
+Setelah melakukan explorer beberapa jam  akhirnya menemukan layanan OpsWorks dan prinsip kerjannya pada Developer Tools.
+
+OpsWorks
+	Bila menggabungkan dari Instance (virtual server)  yang sudah dibuat sebelumnya hanya bisa jalan di linux.
+	Bila buat  Instance (virtual server) baru  bisa menggunakan linux atau Windows.
+
+Sebelum membuat instance dari OpsWorks pastikan anda sudah membuat atau mengaktifkan VPC (Virtual Private Cloud). 
+Karena pada saat membuat instance akan ada pilihan menggunakan VPC atau Non VPC (EC2-Classic), bila VPC sudah terpasang, bila belum maka akan ada hanya 1 pilihan yaitu Non VPC (EC2-Classic).
+Kenapa harus pakai VPC karena tujuan nya biar bisa di akses langsung lewat internet dengan memberikan IP Public pada instance yang akan di buat.
+Bila hanya menggunkana Non VPC (EC2-Classic) hanya mendapatkan IP Private tidak bisa mendapatkan ip elastic langsung.
+
+Begitulah sekilas yang saya tangkap dari dokumentasi VPC dan Non VPC. #maaf kalau salah :)
+
+Yang perlu diperhatikan pada VPC adalah :
+	Subnet dibuat dengan benar.
+	Internet Gateway di seting dengan benar.
+	Route Table pastikan mempunya Destination 0.0.0.0/0 yang menuju ke Target ID Internet Gateway.
+
+Instance yang saya buat statusnya selalu booting karena belum menambahkan destination 0.0.0.0/0 dengan target internet gateway.
+
+Waktunya membuat instance dari OpsWorks yang harus di kerjakan adalah :
+	Membuat Stack, pada saat membuat stack pada pilih VPC pilihlah nama VPC yang sudah dibuat jangan Non VPC yang dipilih, pilih region yang di inginkan, pilih OS untuk Instance, dan seterusnya.
+	Kemudian membuat Layer,
+	kemudian buat instance, pilih size instance yang di inginkan, klik Advanced pilih Time base (pilihan nya 24 jam, time based dan load based).
+
+Setelah selesai klik link Time-Bases disebelah kiri dibawah Instances di situ akan tampil hari di bagian atas di bawahnya jam (time) dalam UTC pastikan bila ingin menghidup/matikan server pada waktu Indonesia bagian (barat) adalah UTC+7 jadi di waktu tersebut di kurangi 7.
+Dibawahnya lagi ada nama Instance yang sudah dibuat. Nah waktu/jam yang	mau gunakan untuk menjalankan dan mematikan server klik pada kolom di bawah angka jam. Sehingga berwarna hijau (ingat di kurangi 7 bila menggunakan zone WIB).Klik juga pada bagian hari diatas  untuk membuat server hidup/mati di hari tertentu (misal pada hari minggu tidak usah di isi  maka server akan mati pada hari tersebut).
+
+--Selesai--
