@@ -1,0 +1,93 @@
+Dokumentasi :
+https://developers.google.com/recaptcha/intro
+
+Daftar layanan recaptcha
+https://www.google.com/recaptcha/intro/index.html
+
+Protect your website from spam and abuse while letting real people pass through with ease
+
+Silakan di liat-liat dulu dokumentasi dan apa itu recptcha.
+Kalau sudah tertarik untuk menggunakan berikut cara singkat menggunakannya.
+
+registrasi dulu di sini untuk memulai
+https://www.google.com/recaptcha/admin
+isi data-data di situ .. seperti nama domain, dan lain-lain.
+
+setelah daftar akan mendapatkan 2 key
+	1. Site key (Use this in the HTML code your site serves to users.)
+	2. Secret key (Use this for communication between your site and Google. Be sure to keep it a secret.)
+
+Site key digunakan untuk pada website yang berinteraksi dengan user pengguna.
+Secret key digunakan untuk komunikasi antara website dan google.
+
+misal kita depat nilai dari ke 2 key adalah:
+Site key = 5464ksdjfsdhsiAAdadadaiPLqrrTYw
+Secret key = Ratdakasduadkew1209aahYJIEY7830GHDASJSsjda
+Pastikan Jangan sampai lupa/kehilangan jejak ke 2 key tersebut, karena akan segera kita pakai selanjutnya. 
+
+Ok langsung aja praktek :
+
+1. Pasang script berikut di bagian header antara tag <header>  dan </header>
+
+<script src='https://www.google.com/recaptcha/api.js'></script>
+
+2 pasang script berikut pada bagian form pokoknya di dalam <form> dan </form> letaknya terserah  biasanya sebelum tombol submit kalau mo pasang captcha
+ misal pada form tujuan dikirimnya pada action="validasi.php" 
+
+<div class="g-recaptcha" data-sitekey="5464ksdjfsdhsiAAdadadaiPLqrrTYw"></div>
+
+data-sitekey adalah Site key (nomor 1) pada 2 key dibagian atas.
+
+Nah dari sisi website dan urusan ke user yang akan dikenakan captcha sudah beres di sini.
+Tinggal memvalidasi nya ke google.
+
+3 Validasi ke server recaptcha (google)
+
+yang perlu di validasi adalah pada form tersebut selain data yang kita sudah tentukan yang di kirim dari form, 
+form tersebut karena ada tambahan captcha menambahkan satu inputan yang bernama "g-recaptcha-response".
+g-recaptcha-response ini mengeluarkan satu string dan dihasilkan kalau captcha sudah berhasil di lewati oleh user dan harus di validasi ke server google.
+Url tujuan validasi adalah :
+
+URL: https://www.google.com/recaptcha/api/siteverify
+
+METHOD: POST
+parameter/variabel yang harus di kirim ke sana adalah :
+1. secret
+	secret adalah Secret key (nomor 2) pada 2 key yang di berikan diatas waktu mendaftar. 
+2. response
+	response adalah variabel dari g-recaptcha-response.
+3 remoteip
+	remoteip adalah ip dari user, hanya optional bisa di pake atau boleh tidak.
+
+Nah bermodal 3 itu yang harus kita kirim ke https://www.google.com/recaptcha/api/siteverify
+respon nya kan berbentuk format JSON seprti berikut :
+{
+  "success": true|false,
+  "challenge_ts": timestamp,  // timestamp of the challenge load (ISO format yyyy-MM-dd'T'HH:mm:ssZZ)
+  "hostname": string,         // the hostname of the site where the reCAPTCHA was solved
+  "error-codes": [...]        // optional
+}
+
+jadi kalau validasi berhasil maka success bernilai true .
+ada beberapa library yang sudah ada dan tinggal pakai untuk memvalidasi nilai g-recaptcha-response,
+tetapi saya menggunakan yang simple aja.
+kita buat file validasi.php yang merupakan file action / tujuan dari form tersebut.
+
+<?php
+//file validasi.php
+$captcha = $_POST['g-recaptcha-response'];
+$secretKey = "Ratdakasduadkew1209aahYJIEY7830GHDASJSsjda";
+$ip = $_SERVER['REMOTE_ADDR'];
+$response=file_get_contents("https://www.google.com/recaptcha/api/siteverify?secret=".$secretKey."&response=".$captcha."&remoteip=".$ip);
+$responseKeys = json_decode($response,true);
+if(intval($responseKeys["success"]) !== 1) {
+   echo 'spammer';
+} else {
+   echo 'OK anda manusia';
+}
+?>
+ 
+File untuk validasi sudah siap, jika nilai dari g-recaptcha-response berhasil di validasi maka akan mengeluarkan pesan 'OK anda manusia', 
+tapi jika gagal atau mencoba bypass captcha akan mengeluarkan pesan 'spammer'.
+
++++====+++++
